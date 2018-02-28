@@ -324,6 +324,13 @@ def resnet_model_fn(features, labels, mode, params):
 
     eval_metrics = (metric_fn, [labels, logits])
 
+  param_stats = tf.profiler.profile(
+    tf.get_default_graph(),
+    options=ProfileOptionBuilder.trainable_variables_parameter())
+  fl_stats = tf.profiler.profile(
+    tf.get_default_graph(),
+    options=tf.profiler.ProfileOptionBuilder.float_operation())
+
   return tpu_estimator.TPUEstimatorSpec(
       mode=mode,
       loss=loss,
@@ -331,7 +338,7 @@ def resnet_model_fn(features, labels, mode, params):
       host_call=host_call,
       eval_metrics=eval_metrics)
 
-
+ProfileOptionBuilder = tf.profiler.ProfileOptionBuilder
 def main(unused_argv):
   if FLAGS.use_tpu:
     # Determine the gRPC URL of the TPU device to use
