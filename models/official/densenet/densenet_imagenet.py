@@ -306,9 +306,17 @@ def model_fn(features, labels, mode, params):
 
     eval_metrics = (metric_fn, [labels, logits, lr_repeat, ce_repeat])
 
+  param_stats = tf.profiler.profile(
+    tf.get_default_graph(),
+    options=ProfileOptionBuilder.trainable_variables_parameter())
+  fl_stats = tf.profiler.profile(
+    tf.get_default_graph(),
+    options=tf.profiler.ProfileOptionBuilder.float_operation())
+
   return tpu_estimator.TPUEstimatorSpec(
       mode=mode, loss=loss, train_op=train_op, eval_metrics=eval_metrics)
 
+ProfileOptionBuilder = tf.profiler.ProfileOptionBuilder
 
 def main(unused_argv):
   if FLAGS.master is None and FLAGS.tpu_name is None:

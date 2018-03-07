@@ -544,6 +544,12 @@ def model_fn(features, labels, mode, params):
 
     eval_metrics = (metric_fn, [labels, eval_predictions])
 
+  param_stats = tf.profiler.profile(
+    tf.get_default_graph(),
+    options=ProfileOptionBuilder.trainable_variables_parameter())
+  fl_stats = tf.profiler.profile(
+    tf.get_default_graph(),
+    options=tf.profiler.ProfileOptionBuilder.float_operation())
   return tpu_estimator.TPUEstimatorSpec(
       mode=mode, loss=loss, train_op=train_op, eval_metrics=eval_metrics)
 
@@ -565,7 +571,7 @@ class LoadEMAHook(tf.train.SessionRunHook):
     tf.logging.info('Reloading EMA...')
     self._load_ema(sess)
 
-
+ProfileOptionBuilder = tf.profiler.ProfileOptionBuilder
 def main(unused_argv):
   del unused_argv  # Unused
 
