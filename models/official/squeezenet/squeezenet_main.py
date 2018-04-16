@@ -65,6 +65,8 @@ tf.flags.DEFINE_integer("num_epochs", 150,
                         "Number of epochs of the training set to process.")
 tf.flags.DEFINE_integer("num_evals", 10,
                         "How many times to run an evaluation during training.")
+tf.flags.DEFINE_integer("iterations", 100,
+                        "iterations per TPU loop")
 tf.flags.DEFINE_float("learning_rate", 0.03, "Learning rate.")
 
 FLAGS = tf.flags.FLAGS
@@ -110,7 +112,7 @@ def main(argv):
       session_config=tf.ConfigProto(
           allow_soft_placement=True, log_device_placement=False),
       tpu_config=tpu_config.TPUConfig(
-          iterations_per_loop=100,
+          iterations_per_loop=FLAGS.iterations,
           num_shards=FLAGS.num_shards,
       ),
   )
