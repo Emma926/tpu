@@ -126,20 +126,21 @@ def main(argv):
       params=dict(params, use_tpu=FLAGS.use_tpu),
   )
 
-  num_evals = max(FLAGS.num_evals, 1)
-  examples_per_eval = training_examples // num_evals
-  for _ in range(num_evals):
-    estimator.train(
+  #num_evals = max(FLAGS.num_evals, 1)
+  #examples_per_eval = training_examples // num_evals
+  #for _ in range(num_evals):
+  estimator.train(
         input_fn=data_pipeline.InputReader(FLAGS.data_dir, is_training=True),
-        steps=examples_per_eval // FLAGS.batch_size)
+        #steps=examples_per_eval // FLAGS.batch_size)
+        steps=FLAGS.train_steps)
 
-    tf.logging.info("Running evaluation")
-    tf.logging.info("%s",
-                    estimator.evaluate(
-                        input_fn=data_pipeline.InputReader(
-                            FLAGS.data_dir, is_training=False),
-                        steps=eval_examples // FLAGS.batch_size,
-                    ))
+  #  tf.logging.info("Running evaluation")
+  #  tf.logging.info("%s",
+  #                  estimator.evaluate(
+  #                      input_fn=data_pipeline.InputReader(
+  #                          FLAGS.data_dir, is_training=False),
+  #                      steps=eval_examples // FLAGS.batch_size,
+  #                  ))
 
 
 if __name__ == "__main__":
