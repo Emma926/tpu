@@ -56,6 +56,7 @@ tf.flags.DEFINE_integer("save_checkpoints_secs", 3600,
                         "Interval between saving model checkpoints.")
 tf.flags.DEFINE_integer("num_shards", 8, "Number of TPU shards.")
 tf.flags.DEFINE_integer("batch_size", 1024, "Batch size for training and eval.")
+tf.flags.DEFINE_integer("train_steps", 100, "Number of training steps.")
 tf.flags.DEFINE_boolean("use_tpu", True, "If true, use TPU device.")
 
 tf.flags.DEFINE_string("optimizer", "momentum",
