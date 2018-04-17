@@ -43,10 +43,10 @@ cmds = {
     --model_dir=gs://$GCS_BUCKET_NAME/mobilenet/$MODEL_DIR\
     --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet',
 
-    'retinanet':'python lgMain_mp.py'\
+    'retinanet':'python retinanet_main.py'\
     + ' --train_batch_size=$BATCH_SIZE\
-    --training_file_pattern==$GCS_BUCKET_NAME/coco/train-* \
-    --resnet_checkpoint=${RESNET_CHECKPOINT} \
+    --training_file_pattern=gs://$GCS_BUCKET_NAME/coco/train-* \
+    --resnet_checkpoint=gs://cloud-tpu-artifacts/resnet/resnet-nhwc-2018-02-07/model.ckpt-112603 \
     --model_dir=gs://$GCS_BUCKET_NAME/retinanet/$MODEL_DIR\
     --hparams=image_size=640 \
     --num_examples_per_epoch=6400 \
@@ -56,8 +56,8 @@ cmds = {
     + ' --alsologtostderr\
     --num_shards=8\
     --optimizer=\'rmsprop\'\
-    --num_evals=10000\
-    --train_batch_size=$BATCH_SIZE\
+    --num_evals=0\
+    --batch_size=$BATCH_SIZE\
     --train_steps=$TRAIN_STEPS\
     --iterations=$ITERATIONS\
     --save_checkpoints_secs=10\
@@ -66,31 +66,37 @@ cmds = {
 
 }
 
+configs = []
+for bs in [8, 16, 32, 64, 128, 256, 512, 1024, 2048]:
+    for it in [10, 100, 1000, 10000]:
+        configs.append((bs, it))
+configs = [(128, 100)]
+for config in configs:
+    (bs, it) = config
+    batch_size = bs
+    iterations = it
+    train_steps = it*3
 
-for name, cmd in cmds.iteritems():
-    name ='squeezenet'
-    cmd = cmds[name]
-    batch_size = 128
-    iterations = 100
-    train_steps = 300
+    for name, cmd in cmds.iteritems():
+        name = 'squeezenet'
+        cmd = cmds[name]
+        if not os.path.isdir(os.path.join(out_path, name)):
+            print('Creating new directory: ' + os.path.join(out_path, name))
+            os.makedirs(os.path.join(out_path, name))
 
-    if not os.path.isdir(os.path.join(out_path, name)):
-        print('Creating new directory: ' + os.path.join(out_path, name))
-        os.makedirs(os.path.join(out_path, name))
+        file_name = 'batchsize_' + str(batch_size) + '-iteration_' + str(iterations)
 
-    file_name = 'batchsize_' + str(batch_size) + '-iteration_' + str(iterations)
-
-    os.chdir(os.path.join(model_path, name))
-    cmd = cmd.replace('$GCS_BUCKET_NAME', GCS_BUCKET_NAME)
-    cmd = cmd.replace('$BATCH_SIZE', str(batch_size))
-    cmd = cmd.replace('$ITERATIONS', str(iterations))
-    cmd = cmd.replace('$TRAIN_STEPS', str(train_steps))
-    cmd = cmd.replace('$MODEL_DIR', file_name)
-    cmd += ' --use_tpu=True --tpu_name=' + os.uname()[1]
-    cmd = " ".join(cmd.split())
-    print(cmd)
-    outfile = open(os.path.join(out_path, name, file_name + '.out'), 'w')
-    errfile = open(os.path.join(out_path, name, file_name + '.err'), 'w')
-    p = subprocess.Popen(cmd.split(' '), stdout=outfile, stderr=errfile)
-    p.wait()
-    break
+        os.chdir(os.path.join(model_path, name))
+        cmd = cmd.replace('$GCS_BUCKET_NAME', GCS_BUCKET_NAME)
+        cmd = cmd.replace('$BATCH_SIZE', str(batch_size))
+        cmd = cmd.replace('$ITERATIONS', str(iterations))
+        cmd = cmd.replace('$TRAIN_STEPS', str(train_steps))
+        cmd = cmd.replace('$MODEL_DIR', file_name)
+        cmd += ' --use_tpu=True --tpu_name=' + os.uname()[1]
+        cmd = " ".join(cmd.split())
+        print(cmd)
+        outfile = open(os.path.join(out_path, name, file_name + '.out'), 'w')
+        errfile = open(os.path.join(out_path, name, file_name + '.err'), 'w')
+        p = subprocess.Popen(cmd.split(' '), stdout=outfile, stderr=errfile)
+        p.wait()
+        break
