@@ -18,12 +18,11 @@ cmds = {
     --train_steps=$TRAIN_STEPS\
     --iterations_per_loop=$ITERATIONS\
     --train_batch_size=$BATCH_SIZE\
-    --model_dir=gs://$GCS_BUCKET_NAME/resneti/$MODEL_DIR',
+    --model_dir=gs://$GCS_BUCKET_NAME/resnet/$MODEL_DIR',
 
     'densenet':'python densenet_imagenet.py'\
     + ' --alsologtostderr\
-    --iterations_per_loop=None\
-    --steps_per_checkpoint=100\
+    -steps_per_checkpoint=100\
     --num_shards=8\
     --mode=\'train\'\
     --train_batch_size=$BATCH_SIZE\
@@ -70,7 +69,6 @@ configs = []
 for bs in [8, 16, 32, 64, 128, 256, 512, 1024, 2048]:
     for it in [10, 100, 1000, 10000]:
         configs.append((bs, it))
-configs = [(128, 100)]
 for config in configs:
     (bs, it) = config
     batch_size = bs
@@ -78,8 +76,9 @@ for config in configs:
     train_steps = it*3
 
     for name, cmd in cmds.iteritems():
-        name = 'squeezenet'
-        cmd = cmds[name]
+        # densenet does not run with this script for now
+        if name == 'densenet':
+            continue
         if not os.path.isdir(os.path.join(out_path, name)):
             print('Creating new directory: ' + os.path.join(out_path, name))
             os.makedirs(os.path.join(out_path, name))
@@ -99,4 +98,3 @@ for config in configs:
         errfile = open(os.path.join(out_path, name, file_name + '.err'), 'w')
         p = subprocess.Popen(cmd.split(' '), stdout=outfile, stderr=errfile)
         p.wait()
-        break
