@@ -188,6 +188,9 @@ def _model_fn(features, labels, mode, params, model):
   Returns:
     tpu_spec: the TPUEstimatorSpec to run training, evaluation, or prediction.
   """
+
+  ProfileOptionBuilder = tf.profiler.ProfileOptionBuilder
+
   cls_outputs, box_outputs = model(
       features,
       min_level=params['min_level'],
@@ -295,6 +298,13 @@ def _model_fn(features, labels, mode, params, model):
       metric_fn_inputs['cls_outputs_%d' % level] = cls_outputs[level]
       metric_fn_inputs['box_outputs_%d' % level] = box_outputs[level]
     eval_metrics = (metric_fn, metric_fn_inputs)
+
+  param_stats = tf.profiler.profile(
+    tf.get_default_graph(),
+    options=ProfileOptionBuilder.trainable_variables_parameter())
+  fl_stats = tf.profiler.profile(
+    tf.get_default_graph(),
+    options=tf.profiler.ProfileOptionBuilder.float_operation())
 
   return tpu_estimator.TPUEstimatorSpec(
       mode=mode,

@@ -94,6 +94,7 @@ def metric_fn(labels, logits, learning_rate):
 
 def model_fn(features, labels, mode, params):
   """TPUEstimatorSpec for the Squeezenet model."""
+  ProfileOptionBuilder = tf.profiler.ProfileOptionBuilder
   is_training = mode == tf.estimator.ModeKeys.TRAIN
   logits = squeezenet(
       features, is_training=is_training, num_classes=params["num_classes"])
@@ -134,6 +135,13 @@ def model_fn(features, labels, mode, params):
     optimizer = tpu_optimizer.CrossShardOptimizer(optimizer)
 
   train_op = optimizer.minimize(loss, tf.train.get_global_step())
+
+  param_stats = tf.profiler.profile(
+    tf.get_default_graph(),
+    options=ProfileOptionBuilder.trainable_variables_parameter())
+  fl_stats = tf.profiler.profile(
+    tf.get_default_graph(),
+    options=tf.profiler.ProfileOptionBuilder.float_operation())
 
   return tpu_estimator.TPUEstimatorSpec(
       mode=mode,

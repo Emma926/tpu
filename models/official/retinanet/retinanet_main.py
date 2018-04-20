@@ -66,6 +66,8 @@ tf.flags.DEFINE_integer('train_batch_size', 64, 'training batch size')
 tf.flags.DEFINE_integer('eval_steps', 5000, 'evaluation steps')
 tf.flags.DEFINE_integer(
     'iterations_per_loop', 100, 'Number of iterations per TPU training loop')
+tf.flags.DEFINE_integer(
+    'train_steps', 100, 'Number of train steps')
 tf.flags.DEFINE_string(
     'training_file_pattern', None,
     'Glob for training data files (e.g., COCO train - minival set)')
@@ -157,8 +159,9 @@ def main(argv):
     train_estimator.train(
         input_fn=dataloader.InputReader(FLAGS.training_file_pattern,
                                         is_training=True),
-        steps=int((FLAGS.num_epochs * FLAGS.num_examples_per_epoch) /
-                  FLAGS.train_batch_size))
+        steps=FLAGS.train_steps)
+        #steps=int((FLAGS.num_epochs * FLAGS.num_examples_per_epoch) /
+        #          FLAGS.train_batch_size))
 
     if FLAGS.eval_after_training:
       # Run evaluation after training finishes.
