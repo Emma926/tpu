@@ -47,6 +47,8 @@ cmds = {
     --training_file_pattern=gs://$GCS_BUCKET_NAME/coco/train-* \
     --resnet_checkpoint=gs://cloud-tpu-artifacts/resnet/resnet-nhwc-2018-02-07/model.ckpt-112603 \
     --model_dir=gs://$GCS_BUCKET_NAME/retinanet/$MODEL_DIR\
+    --iterations_per_loop=$ITERATIONS\
+    --train_steps=$TRAIN_STEPS\
     --hparams=image_size=640 \
     --num_examples_per_epoch=6400 \
     --num_epochs=1',
@@ -67,8 +69,9 @@ cmds = {
 
 configs = []
 for bs in [8, 16, 32, 64, 128, 256, 512, 1024, 2048]:
-    for it in [10, 100, 1000, 10000]:
+    for it in [100, 1000, 10000]:
         configs.append((bs, it))
+
 for config in configs:
     (bs, it) = config
     batch_size = bs
@@ -77,15 +80,28 @@ for config in configs:
 
     for name, cmd in cmds.iteritems():
         # densenet does not run with this script for now
-        if name == 'densenet':
+        if not (name == 'resnet' or name == 'mobilenet'):
             continue
         if not os.path.isdir(os.path.join(out_path, name)):
             print('Creating new directory: ' + os.path.join(out_path, name))
             os.makedirs(os.path.join(out_path, name))
 
         file_name = 'batchsize_' + str(batch_size) + '-iteration_' + str(iterations)
+        #os.system('grep \"global_step/sec\" ' + err_file + ' > tmp')
+        #if not os.stat('tmp').st_size == 0:
+        #    continue
 
         os.chdir(os.path.join(model_path, name))
+        if not 'BATCH_SIZE' in cmd:
+          print(name, '\'s cmd does not have BATCH_SIZE.')
+          continue
+        if not 'ITERATIONS' in cmd:
+          print(name, '\'s cmd does not have ITERATIONS.')
+          continue
+        if not 'TRAIN_STEPS' in cmd:
+          print(name, '\'s cmd does not have TRAIN_STEPS.')
+          continue
+        
         cmd = cmd.replace('$GCS_BUCKET_NAME', GCS_BUCKET_NAME)
         cmd = cmd.replace('$BATCH_SIZE', str(batch_size))
         cmd = cmd.replace('$ITERATIONS', str(iterations))
@@ -98,3 +114,4 @@ for config in configs:
         errfile = open(os.path.join(out_path, name, file_name + '.err'), 'w')
         p = subprocess.Popen(cmd.split(' '), stdout=outfile, stderr=errfile)
         p.wait()
+        break
