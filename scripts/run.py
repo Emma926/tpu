@@ -80,14 +80,14 @@ for config in configs:
 
     for name, cmd in cmds.iteritems():
         # densenet does not run with this script for now
-        if not (name == 'resnet' or name == 'mobilenet'):
+        if not (name == 'retinanet'):
             continue
         if not os.path.isdir(os.path.join(out_path, name)):
             print('Creating new directory: ' + os.path.join(out_path, name))
             os.makedirs(os.path.join(out_path, name))
 
         file_name = 'batchsize_' + str(batch_size) + '-iteration_' + str(iterations)
-        #os.system('grep \"global_step/sec\" ' + err_file + ' > tmp')
+        #os.system('grep \"global_step/sec\" ' + os.path.join(out_path, name, file_name + '.err') + ' > tmp')
         #if not os.stat('tmp').st_size == 0:
         #    continue
 
@@ -109,7 +109,8 @@ for config in configs:
         cmd = cmd.replace('$MODEL_DIR', file_name)
         cmd += ' --use_tpu=True --tpu_name=' + os.uname()[1]
         cmd = " ".join(cmd.split())
-        print(cmd)
+
+        print(name, os.path.join(out_path, name, file_name + '.err'))
         outfile = open(os.path.join(out_path, name, file_name + '.out'), 'w')
         errfile = open(os.path.join(out_path, name, file_name + '.err'), 'w')
         p = subprocess.Popen(cmd.split(' '), stdout=outfile, stderr=errfile)
