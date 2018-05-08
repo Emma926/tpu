@@ -3,13 +3,14 @@ import subprocess
 
 root = os.path.realpath('..')
 out_path = os.path.join(root, 'outputs')
-model_path= os.path.join(root, 'models/official')
+model_path= os.path.join(root, 'models/local')
 GCS_BUCKET_NAME='tpubenchmarking'
 
 if not os.path.isdir(out_path):
     print('Creating new directory: ' + out_path)
     os.makedirs(out_path)
 
+# densenet does not run with this script for now
 cmds = {
     'resnet': 'python resnet_main.py'\
     + ' --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet\
@@ -20,16 +21,24 @@ cmds = {
     --train_batch_size=$BATCH_SIZE\
     --model_dir=gs://$GCS_BUCKET_NAME/resnet/$MODEL_DIR',
 
-    'densenet':'python densenet_imagenet.py'\
-    + ' --alsologtostderr\
-    -steps_per_checkpoint=100\
-    --num_shards=8\
-    --mode=\'train\'\
-    --train_batch_size=$BATCH_SIZE\
+    'resnet_bfloat16': 'python resnet_main.py'\
+    + ' --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet\
+    --steps_per_eval=5000\
     --train_steps=$TRAIN_STEPS\
     --iterations_per_loop=$ITERATIONS\
-    --model_dir=gs://$GCS_BUCKET_NAME/densenet/$MODEL_DIR\
-    --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet',
+    --train_batch_size=$BATCH_SIZE\
+    --model_dir=gs://$GCS_BUCKET_NAME/resnet_bfloat16/$MODEL_DIR',
+
+#    'densenet':'python densenet_imagenet.py'\
+#    + ' --alsologtostderr\
+#    -steps_per_checkpoint=100\
+#    --num_shards=8\
+#    --mode=\'train\'\
+#    --train_batch_size=$BATCH_SIZE\
+#    --train_steps=$TRAIN_STEPS\
+#    --iterations_per_loop=$ITERATIONS\
+#    --model_dir=gs://$GCS_BUCKET_NAME/densenet/$MODEL_DIR\
+#    --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet',
 
     'mobilenet':'python mobilenet.py' \
     + ' --alsologtostderr\
@@ -68,10 +77,11 @@ cmds = {
 }
 
 configs = []
-for bs in [8, 16, 32, 64, 128, 256, 512, 1024, 2048]:
-    for it in [100, 1000, 10000]:
-        configs.append((bs, it))
+#for bs in [8, 16, 32, 64, 128, 256, 512, 1024, 2048]:
+#    for it in [100, 1000, 10000]:
+#        configs.append((bs, it))
 
+configs = [(1024, 100), (1024, 10000)]
 for config in configs:
     (bs, it) = config
     batch_size = bs
@@ -79,9 +89,6 @@ for config in configs:
     train_steps = it*3
 
     for name, cmd in cmds.iteritems():
-        # densenet does not run with this script for now
-        if not (name == 'retinanet'):
-            continue
         if not os.path.isdir(os.path.join(out_path, name)):
             print('Creating new directory: ' + os.path.join(out_path, name))
             os.makedirs(os.path.join(out_path, name))
@@ -111,8 +118,8 @@ for config in configs:
         cmd = " ".join(cmd.split())
 
         print(name, os.path.join(out_path, name, file_name + '.err'))
+        print(cmd)
         outfile = open(os.path.join(out_path, name, file_name + '.out'), 'w')
         errfile = open(os.path.join(out_path, name, file_name + '.err'), 'w')
         p = subprocess.Popen(cmd.split(' '), stdout=outfile, stderr=errfile)
         p.wait()
-        break
