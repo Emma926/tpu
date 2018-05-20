@@ -19,7 +19,8 @@ cmds = {
     --train_steps=$TRAIN_STEPS\
     --iterations_per_loop=$ITERATIONS\
     --train_batch_size=$BATCH_SIZE\
-    --model_dir=gs://$GCS_BUCKET_NAME/resnet/$MODEL_DIR',
+    --model_dir=gs://$GCS_BUCKET_NAME/tmp',
+#    --model_dir=gs://$GCS_BUCKET_NAME/resnet/$MODEL_DIR',
 
     'resnet_bfloat16': 'python resnet_main.py'\
     + ' --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet\
@@ -27,18 +28,24 @@ cmds = {
     --train_steps=$TRAIN_STEPS\
     --iterations_per_loop=$ITERATIONS\
     --train_batch_size=$BATCH_SIZE\
-    --model_dir=gs://$GCS_BUCKET_NAME/resnet_bfloat16/$MODEL_DIR',
+    --num_parallel_calls=192\
+    --mode=train\
+    --use_transpose=1\
+    --model_dir=gs://$GCS_BUCKET_NAME/tmp',
+    #--model_dir=gs://$GCS_BUCKET_NAME/resnet_bfloat16/$MODEL_DIR',
 
-#    'densenet':'python densenet_imagenet.py'\
-#    + ' --alsologtostderr\
-#    -steps_per_checkpoint=100\
-#    --num_shards=8\
-#    --mode=\'train\'\
-#    --train_batch_size=$BATCH_SIZE\
-#    --train_steps=$TRAIN_STEPS\
-#    --iterations_per_loop=$ITERATIONS\
-#    --model_dir=gs://$GCS_BUCKET_NAME/densenet/$MODEL_DIR\
-#    --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet',
+
+    'densenet':'python densenet_imagenet.py'\
+    + ' --alsologtostderr\
+    -steps_per_checkpoint=100\
+    --num_shards=8\
+    --mode=\'train\'\
+    --train_batch_size=$BATCH_SIZE\
+    --train_steps=$TRAIN_STEPS\
+    --iterations_per_loop=$ITERATIONS\
+    --model_dir=gs://$GCS_BUCKET_NAME/tmp\
+    --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet',
+    #--model_dir=gs://$GCS_BUCKET_NAME/densenet/$MODEL_DIR\
 
     'mobilenet':'python mobilenet.py' \
     + ' --alsologtostderr\
@@ -48,19 +55,21 @@ cmds = {
     --train_steps=$TRAIN_STEPS\
     --iterations=$ITERATIONS\
     --save_checkpoints_secs=10\
-    --model_dir=gs://$GCS_BUCKET_NAME/mobilenet/$MODEL_DIR\
+    --model_dir=gs://$GCS_BUCKET_NAME/tmp\
     --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet',
+    #--model_dir=gs://$GCS_BUCKET_NAME/mobilenet/$MODEL_DIR\
 
-    'retinanet':'python retinanet_main.py'\
-    + ' --train_batch_size=$BATCH_SIZE\
-    --training_file_pattern=gs://$GCS_BUCKET_NAME/coco/train-* \
-    --resnet_checkpoint=gs://cloud-tpu-artifacts/resnet/resnet-nhwc-2018-02-07/model.ckpt-112603 \
-    --model_dir=gs://$GCS_BUCKET_NAME/retinanet/$MODEL_DIR\
-    --iterations_per_loop=$ITERATIONS\
-    --train_steps=$TRAIN_STEPS\
-    --hparams=image_size=640 \
-    --num_examples_per_epoch=6400 \
-    --num_epochs=1',
+#    'retinanet':'python retinanet_main.py'\
+#    + ' --train_batch_size=$BATCH_SIZE\
+#    --training_file_pattern=gs://$GCS_BUCKET_NAME/coco/train-* \
+#    --resnet_checkpoint=gs://cloud-tpu-artifacts/resnet/resnet-nhwc-2018-02-07/model.ckpt-112603 \
+#     --model_dir=gs://$GCS_BUCKET_NAME/tmp\
+#    --iterations_per_loop=$ITERATIONS\
+#    --train_steps=$TRAIN_STEPS\
+#    --hparams=image_size=640 \
+#    --num_examples_per_epoch=6400 \
+#    --num_epochs=1',
+##    --model_dir=gs://$GCS_BUCKET_NAME/retinanet/$MODEL_DIR\
     
     'squeezenet':'python squeezenet_main.py' \
     + ' --alsologtostderr\
@@ -71,8 +80,9 @@ cmds = {
     --train_steps=$TRAIN_STEPS\
     --iterations=$ITERATIONS\
     --save_checkpoints_secs=10\
-    --model_dir=gs://$GCS_BUCKET_NAME/squeezenet/$MODEL_DIR\
+    --model_dir=gs://$GCS_BUCKET_NAME/tmp\
     --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet',
+    #--model_dir=gs://$GCS_BUCKET_NAME/squeezenet/$MODEL_DIR\
 
 }
 
@@ -81,19 +91,18 @@ configs = []
 #    for it in [100, 1000, 10000]:
 #        configs.append((bs, it))
 
-configs = [(1024, 100), (1024, 10000)]
+configs = [(1024, 100, 300), (1024, 1000, 10000)]
+
 for config in configs:
-    (bs, it) = config
-    batch_size = bs
-    iterations = it
-    train_steps = it*3
+    (batch_size, iterations, train_steps) = config
 
     for name, cmd in cmds.iteritems():
-        if not os.path.isdir(os.path.join(out_path, name)):
-            print('Creating new directory: ' + os.path.join(out_path, name))
-            os.makedirs(os.path.join(out_path, name))
+        #if not os.path.isdir(os.path.join(out_path, name)):
+        #    print('Creating new directory: ' + os.path.join(out_path, name))
+        #    os.makedirs(os.path.join(out_path, name))
 
-        file_name = 'batchsize_' + str(batch_size) + '-iteration_' + str(iterations)
+        os.system('gsutil rm -r gs://' + GCS_BUCKET_NAME + '/tmp')
+        file_name = name + '-batchsize_' + str(batch_size) + '-iteration_' + str(iterations) + '-trainsteps_' + str(train_steps)
         #os.system('grep \"global_step/sec\" ' + os.path.join(out_path, name, file_name + '.err') + ' > tmp')
         #if not os.stat('tmp').st_size == 0:
         #    continue
@@ -114,12 +123,14 @@ for config in configs:
         cmd = cmd.replace('$ITERATIONS', str(iterations))
         cmd = cmd.replace('$TRAIN_STEPS', str(train_steps))
         cmd = cmd.replace('$MODEL_DIR', file_name)
-        cmd += ' --use_tpu=True --tpu_name=' + os.uname()[1]
+        cmd += ' --use_tpu=True --tpu_name=' + os.uname()[1] + ' --zone=us-central1-f'
         cmd = " ".join(cmd.split())
 
-        print(name, os.path.join(out_path, name, file_name + '.err'))
+        print(name, os.path.join(out_path, file_name + '.err'))
         print(cmd)
-        outfile = open(os.path.join(out_path, name, file_name + '.out'), 'w')
-        errfile = open(os.path.join(out_path, name, file_name + '.err'), 'w')
-        p = subprocess.Popen(cmd.split(' '), stdout=outfile, stderr=errfile)
+        outfile = open(os.path.join(out_path, file_name + '.out'), 'w')
+        #errfile = open(os.path.join(out_path, file_name + '.err'), 'w')
+        #errfile = open(os.path.join(out_path, file_name + '.err'), 'w')
+        #p = subprocess.Popen(cmd.split(' '), stdout=outfile, stderr=errfile)
+        p = subprocess.Popen(cmd.split(' '), stdout=outfile, stderr=subprocess.STDOUT)
         p.wait()
