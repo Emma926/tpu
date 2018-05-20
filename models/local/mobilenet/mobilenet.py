@@ -206,11 +206,11 @@ tf.flags.DEFINE_integer(
     'Number of bytes in read buffer. 0 means no buffering.')
 
 tf.flags.DEFINE_integer(
-    'num_files_infeed', 8,
+    'num_files_infeed', 192,
     'Number of training files to read in parallel.')
 
 tf.flags.DEFINE_integer(
-    'num_parallel_calls', 64,
+    'num_parallel_calls', 192,
     'Number of elements to process in parallel (by mapper)')
 
 tf.flags.DEFINE_integer(

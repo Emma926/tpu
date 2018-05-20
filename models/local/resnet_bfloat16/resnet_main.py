@@ -19,60 +19,64 @@ from __future__ import division
 from __future__ import print_function
 
 import csv
+import os
 import time
 
+from absl import flags
 import absl.logging as _logging  # pylint: disable=unused-import
 import tensorflow as tf
 
 import imagenet_input
 import resnet_model
+import resnet_preprocessing
 from tensorflow.contrib import summary
 from tensorflow.contrib.tpu.python.tpu import tpu_config
 from tensorflow.contrib.tpu.python.tpu import tpu_estimator
 from tensorflow.contrib.tpu.python.tpu import tpu_optimizer
+from tensorflow.contrib.training.python.training import evaluation
 from tensorflow.python.estimator import estimator
 
-FLAGS = tf.flags.FLAGS
+FLAGS = flags.FLAGS
 
-tf.flags.DEFINE_bool(
+flags.DEFINE_bool(
     'use_tpu', True,
     help=('Use TPU to execute the model for training and evaluation. If'
           ' --use_tpu=false, will use whatever devices are available to'
           ' TensorFlow by default (e.g. CPU and GPU)'))
 
 # Cloud TPU Cluster Resolvers
-tf.flags.DEFINE_string(
+flags.DEFINE_string(
     'gcp_project', default=None,
     help='Project name for the Cloud TPU-enabled project. If not specified, we '
     'will attempt to automatically detect the GCE project from metadata.')
 
-tf.flags.DEFINE_string(
+flags.DEFINE_string(
     'tpu_zone', default=None,
     help='GCE zone where the Cloud TPU is located in. If not specified, we '
     'will attempt to automatically detect the GCE project from metadata.')
 
-tf.flags.DEFINE_string(
+flags.DEFINE_string(
     'tpu_name', default=None,
     help='Name of the Cloud TPU for Cluster Resolvers. You must specify either '
     'this flag or --master.')
 
-tf.flags.DEFINE_string(
+flags.DEFINE_string(
     'master', default=None,
     help='gRPC URL of the master (i.e. grpc://ip.address.of.tpu:8470). You '
     'must specify either this flag or --tpu_name.')
 
 # Model specific flags
-tf.flags.DEFINE_string(
+flags.DEFINE_string(
     'data_dir', default=None,
     help=('The directory where the ImageNet input data is stored. Please see'
           ' the README.md for the expected data format.'))
 
-tf.flags.DEFINE_string(
+flags.DEFINE_string(
     'model_dir', default=None,
     help=('The directory where the model and training/evaluation summaries are'
           ' stored.'))
 
-tf.flags.DEFINE_integer(
+flags.DEFINE_integer(
     'resnet_depth', default=50,
     help=('Depth of ResNet model to use. Must be one of {18, 34, 50, 101, 152,'
           ' 200}. ResNet-18 and 34 use the pre-activation residual blocks'
@@ -81,54 +85,68 @@ tf.flags.DEFINE_integer(
           ' more memory and may require reducing --train_batch_size to prevent'
           ' running out of memory.'))
 
-tf.flags.DEFINE_integer(
-    'train_steps', default=112603,
-    help=('The number of steps to use for training. Default is 112603 steps'
+flags.DEFINE_integer(
+    'train_steps', default=112590,
+    help=('The number of steps to use for training. Default is 112590 steps'
           ' which is approximately 90 epochs at batch size 1024. This flag'
           ' should be adjusted according to the --train_batch_size flag.'))
 
-tf.flags.DEFINE_integer(
+flags.DEFINE_integer(
     'train_batch_size', default=1024, help='Batch size for training.')
 
-tf.flags.DEFINE_integer(
+flags.DEFINE_integer(
     'eval_batch_size', default=1024, help='Batch size for evaluation.')
 
-tf.flags.DEFINE_integer(
-    'steps_per_eval', default=5000,
+flags.DEFINE_integer(
+    'steps_per_eval', default=1251,
     help=('Controls how often evaluation is performed. Since evaluation is'
           ' fairly expensive, it is advised to evaluate as infrequently as'
           ' possible (i.e. up to --train_steps, which evaluates the model only'
           ' after finishing the entire training regime).'))
 
-tf.flags.DEFINE_integer(
-    'iterations_per_loop', default=1500,
+flags.DEFINE_integer(
+    'iterations_per_loop', default=1251,
     help=('Number of steps to run on TPU before outfeeding metrics to the CPU.'
           ' If the number of iterations in the loop would exceed the number of'
           ' train steps, the loop will exit before reaching'
           ' --iterations_per_loop. The larger this value is, the higher the'
           ' utilization on the TPU.'))
 
-tf.flags.DEFINE_integer(
-    'num_parallel_calls', default=64,
+flags.DEFINE_integer(
+    'num_parallel_calls', default=192,
     help=('Number of parallel threads in CPU for the input pipeline'))
 
-tf.flags.DEFINE_integer(
+flags.DEFINE_integer(
     'num_cores', default=8,
     help=('Number of TPU cores. For a single TPU device, this is 8 because each'
           ' TPU has 4 chips each with 2 cores.'))
 
-tf.flags.DEFINE_string(
+flags.DEFINE_string('mode', 'train_and_eval',
+                    'Mode to run: train or eval (default: train)')
+
+flags.DEFINE_string(
     'data_format',
     default='channels_last',
     help=('A flag to override the data format used in the model. The value '
           'is either channels_first or channels_last. To run the network on '
           'CPU or TPU, channels_last should be used.'))
 
-tf.flags.DEFINE_string(
+flags.DEFINE_string(
     'export_dir',
     default=None,
     help=('The directory where the exported SavedModel will be stored.'))
 
+# For Eval mode
+flags.DEFINE_integer('min_eval_interval', 30 * 60,
+                     'Minimum seconds between evaluations.')
+
+flags.DEFINE_integer(
+    'eval_timeout', None,
+    'Maximum seconds between checkpoints before evaluation terminates.')
+
+flags.DEFINE_bool(
+    'use_transpose', True,
+    help=('Use the TPU double transpose optimization'))
 
 # Dataset constants
 LABEL_CLASSES = 1000
@@ -227,6 +245,12 @@ def resnet_model_fn(features, labels, mode, params):
   """
   if isinstance(features, dict):
     features = features['feature']
+
+  if FLAGS.use_transpose:
+    features = tf.transpose(features, [3, 0, 1, 2])  # HWCN to NHCW
+
+  features = resnet_preprocessing.normalize(features)
+  features = tf.cast(features, tf.bfloat16)
 
   # In most cases, the default data format NCHW instead of NHWC should be
   # used for a significant performance boost on GPU/TPU. NHWC should be used
@@ -368,8 +392,8 @@ def resnet_model_fn(features, labels, mode, params):
       top_5_accuracy = tf.metrics.mean(in_top_5)
 
       return {
-          'Top-1 accuracy': top_1_accuracy,
-          'Top-5 accuracy': top_5_accuracy,
+          'top_1_accuracy': top_1_accuracy,
+          'top_5_accuracy': top_5_accuracy,
       }
 
     eval_metrics = (metric_fn, [labels, logits])
@@ -416,75 +440,143 @@ def main(unused_argv):
       master=tpu_grpc_url,
       evaluation_master=tpu_grpc_url,
       model_dir=FLAGS.model_dir,
+      save_checkpoints_steps=10000000000,
       keep_checkpoint_max=None,
       tpu_config=tpu_config.TPUConfig(
+          per_host_input_for_training=True,
           iterations_per_loop=FLAGS.iterations_per_loop,
           num_shards=FLAGS.num_cores))
 
+  batch_axis = 0
+  if FLAGS.use_transpose:
+    batch_axis = 3
   resnet_classifier = tpu_estimator.TPUEstimator(
       use_tpu=FLAGS.use_tpu,
       model_fn=resnet_model_fn,
       config=config,
       train_batch_size=FLAGS.train_batch_size,
-      eval_batch_size=FLAGS.eval_batch_size)
+      eval_batch_size=FLAGS.eval_batch_size,
+      batch_axis=(batch_axis, 0))
 
   # Input pipelines are slightly different (with regards to shuffling and
   # preprocessing) between training and evaluation.
   imagenet_train = imagenet_input.ImageNetInput(
       is_training=True,
       data_dir=FLAGS.data_dir,
-      num_parallel_calls=FLAGS.num_parallel_calls)
+      num_parallel_calls=FLAGS.num_parallel_calls,
+      use_transpose=FLAGS.use_transpose)
   imagenet_eval = imagenet_input.ImageNetInput(
       is_training=False,
       data_dir=FLAGS.data_dir,
-      num_parallel_calls=FLAGS.num_parallel_calls)
+      num_parallel_calls=FLAGS.num_parallel_calls,
+      use_transpose=FLAGS.use_transpose)
 
   current_step = estimator._load_global_step_from_checkpoint_dir(FLAGS.model_dir)  # pylint: disable=protected-access,line-too-long
-  batches_per_epoch = NUM_TRAIN_IMAGES // FLAGS.train_batch_size
   start_timestamp = time.time()
   current_epoch = current_step // FLAGS.train_batch_size
-  results = []
-  #while current_epoch < 95:
-  #  next_checkpoint = (current_epoch + 1) * batches_per_epoch
-  resnet_classifier.train(
+
+  if FLAGS.mode == 'train':
+    resnet_classifier.train(
         input_fn=imagenet_train.input_fn, max_steps=FLAGS.train_steps)
-  #  current_epoch += 1
+    training_time = time.time() - start_timestamp
+    tf.logging.info('Finished training in %d seconds' % training_time)
 
-  #  tf.logging.info('Finished training up to step %d. Elapsed seconds %d.' %
-  #                  (next_checkpoint, int(time.time() - start_timestamp)))
+    with tf.gfile.GFile(FLAGS.model_dir + '/total_time_%s.txt' % training_time, 'w') as f:  # pylint: disable=line-too-long
+      f.write('Total training time was %s seconds' % training_time)
+  elif FLAGS.mode == 'eval':
+    results = []
+    def terminate_eval():
+      tf.logging.info('Terminating eval after %d seconds of no checkpoints' %
+                      FLAGS.eval_timeout)
+      return True
 
-    # Evaluate the model on the most recent model in --model_dir.
-    # Since evaluation happens in batches of --eval_batch_size, some images may
-    # be excluded modulo the batch size. As long as the batch size is
-    # consistent, the evaluated images are also consistent.
-#    tf.logging.info('Starting to evaluate.')
-#    eval_results = resnet_classifier.evaluate(
-#        input_fn=imagenet_eval.input_fn,
-#        steps=NUM_EVAL_IMAGES // FLAGS.eval_batch_size)
-#    tf.logging.info('Eval results: %s' % eval_results)
-#
-#    elapsed_time = int(time.time() - start_timestamp)
-#    tf.logging.info('Finished epoch %s at %s time' % (
-#        current_epoch, elapsed_time))
-#    results.append([
-#        current_epoch,
-#        elapsed_time / 3600.0,
-#        '{0:.2f}'.format(eval_results['Top-1 accuracy']*100),
-#        '{0:.2f}'.format(eval_results['Top-5 accuracy']*100),
-#    ])
+    # Run evaluation when there's a new checkpoint
+    for ckpt in evaluation.checkpoints_iterator(
+        FLAGS.model_dir,
+        min_interval_secs=FLAGS.min_eval_interval,
+        timeout=FLAGS.eval_timeout,
+        timeout_fn=terminate_eval):
 
-#  with tf.gfile.GFile(FLAGS.model_dir + '/epoch_results.tsv', 'wb') as tsv_file:
-#    writer = csv.writer(tsv_file, delimiter='\t')
-#    writer.writerow(['epoch', 'hours', 'top1Accuracy', 'top5Accuracy'])
-#    writer.writerows(results)
-#
-#  if FLAGS.export_dir is not None:
-#    # The guide to serve a exported TensorFlow model is at:
-#    #    https://www.tensorflow.org/serving/serving_basic
-#    tf.logging.info('Starting to export model.')
-#    resnet_classifier.export_savedmodel(
-#        export_dir_base=FLAGS.export_dir,
-#        serving_input_receiver_fn=imagenet_input.image_serving_input_fn)
+      tf.logging.info('Starting to evaluate.')
+      try:
+        eval_results = resnet_classifier.evaluate(
+            input_fn=imagenet_eval.input_fn,
+            steps=NUM_EVAL_IMAGES // FLAGS.eval_batch_size)
+        tf.logging.info('Eval results: %s' % eval_results)
+
+        # Terminate eval job when final checkpoint is reached
+        current_step = int(os.path.basename(ckpt).split('-')[1])
+        current_epoch = current_step // FLAGS.iterations_per_loop
+        results.append([
+            current_epoch,
+            '{0:.2f}'.format(eval_results['top_1_accuracy']*100),
+            '{0:.2f}'.format(eval_results['top_5_accuracy']*100),
+        ])
+
+        if current_step >= FLAGS.train_steps:
+          tf.logging.info('Evaluation finished after training step %d' %
+                          current_step)
+          break
+
+      except tf.errors.NotFoundError:
+        # Since the coordinator is on a different job than the TPU worker,
+        # sometimes the TPU worker does not finish initializing until long after
+        # the CPU job tells it to start evaluating. In this case, the checkpoint
+        # file could have been deleted already.
+        tf.logging.info('Checkpoint %s no longer exists, skipping checkpoint' %
+                        ckpt)
+    with tf.gfile.GFile(FLAGS.model_dir + '/epoch_results_eval.tsv', 'wb') as tsv_file:  # pylint: disable=line-too-long
+      writer = csv.writer(tsv_file, delimiter='\t')
+      writer.writerow(['epoch', 'top1Accuracy', 'top5Accuracy'])
+      writer.writerows(results)
+  elif FLAGS.mode == 'train_and_eval':
+    batches_per_epoch = NUM_TRAIN_IMAGES // FLAGS.train_batch_size
+    start_timestamp = time.time()
+    current_epoch = current_step // FLAGS.train_batch_size
+    results = []
+    while current_epoch < 95:
+      next_checkpoint = (current_epoch + 1) * batches_per_epoch
+      resnet_classifier.train(
+          input_fn=imagenet_train.input_fn, max_steps=next_checkpoint)
+      current_epoch += 1
+
+      tf.logging.info('Finished training up to step %d. Elapsed seconds %d.' %
+                      (next_checkpoint, int(time.time() - start_timestamp)))
+
+      # Evaluate the model on the most recent model in --model_dir.
+      # Since evaluation happens in batches of --eval_batch_size, some images
+      # may be excluded modulo the batch size. As long as the batch size is
+      # consistent, the evaluated images are also consistent.
+      tf.logging.info('Starting to evaluate.')
+      eval_results = resnet_classifier.evaluate(
+          input_fn=imagenet_eval.input_fn,
+          steps=NUM_EVAL_IMAGES // FLAGS.eval_batch_size)
+      tf.logging.info('Eval results: %s' % eval_results)
+
+      elapsed_time = int(time.time() - start_timestamp)
+      tf.logging.info('Finished epoch %s at %s time' % (
+          current_epoch, elapsed_time))
+      results.append([
+          current_epoch,
+          elapsed_time / 3600.0,
+          '{0:.2f}'.format(eval_results['top_1_accuracy']*100),
+          '{0:.2f}'.format(eval_results['top_5_accuracy']*100),
+      ])
+
+    with tf.gfile.GFile(FLAGS.model_dir + '/epoch_results_train_eval.tsv', 'wb') as tsv_file:   # pylint: disable=line-too-long
+      writer = csv.writer(tsv_file, delimiter='\t')
+      writer.writerow(['epoch', 'hours', 'top1Accuracy', 'top5Accuracy'])
+      writer.writerows(results)
+  else:
+    tf.logging.info('Mode not found.')
+
+  if FLAGS.export_dir is not None:
+    # The guide to serve a exported TensorFlow model is at:
+    #    https://www.tensorflow.org/serving/serving_basic
+    tf.logging.info('Starting to export model.')
+    resnet_classifier.export_savedmodel(
+        export_dir_base=FLAGS.export_dir,
+        serving_input_receiver_fn=imagenet_input.image_serving_input_fn)
 
 
 if __name__ == '__main__':

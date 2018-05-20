@@ -395,7 +395,7 @@ def main(unused_argv):
     # Train for up to steps_per_eval number of steps. At the end of training, a
     # checkpoint will be written to --model_dir.
   #  next_checkpoint = min(current_step + FLAGS.steps_per_eval,
-                          FLAGS.train_steps)
+  #                        FLAGS.train_steps)
   resnet_classifier.train(
         input_fn=imagenet_train.input_fn, max_steps=FLAGS.train_steps)
     #current_step = next_checkpoint

@@ -146,12 +146,12 @@ class ImageNetInput(object):
 
     dataset = dataset.apply(
         tf.contrib.data.parallel_interleave(
-            fetch_dataset, cycle_length=self.num_cores, sloppy=True))
+            fetch_dataset, cycle_length=192, sloppy=True))
     dataset = dataset.shuffle(1024)
 
     dataset = dataset.map(
         self.dataset_parser,
-        num_parallel_calls=64)
+        num_parallel_calls=192)
     dataset = dataset.prefetch(batch_size)
 
     # For training, batch as usual. When evaluating, prevent accidentally

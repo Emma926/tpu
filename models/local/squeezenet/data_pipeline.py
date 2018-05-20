@@ -435,10 +435,10 @@ class InputReader(object):
 
     dataset = dataset.apply(
         tf.contrib.data.parallel_interleave(
-            _load_records, sloppy=True, cycle_length=64))
+            _load_records, sloppy=True, cycle_length=192))
 
     dataset = dataset.prefetch(bs * 4)
-    dataset = dataset.map(self._parse_record, num_parallel_calls=32)
+    dataset = dataset.map(self._parse_record, num_parallel_calls=192)
     dataset = dataset.apply(tf.contrib.data.batch_and_drop_remainder(bs))
     dataset = dataset.prefetch(4)
 
