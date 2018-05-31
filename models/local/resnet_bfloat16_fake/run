@@ -1,0 +1,1 @@
+python resnet_main.py --tpu_name=tf17-2 --zone=us-central1-f --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet --model_dir=gs://tpubenchmarking/tmp --mode=train --train_steps=100000 --iterations_per_loop=1000 --num_parallel_calls=192 --use_transpose=1

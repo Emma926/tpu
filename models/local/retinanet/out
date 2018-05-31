@@ -1,0 +1,1 @@
+('boxes', <tf.Tensor 'parser/transpose:0' shape=(?, 4) dtype=float32>)

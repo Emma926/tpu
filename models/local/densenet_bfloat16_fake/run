@@ -1,0 +1,1 @@
+python densenet_imagenet.py --alsologtostderr -steps_per_checkpoint=100 --num_shards=8 --mode='train' --train_batch_size=1024 --train_steps=5000 --iterations_per_loop=1000 --model_dir=gs://tpubenchmarking/tmp --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet --use_tpu=True --tpu_name=tf17-2 --zone=us-central1-f

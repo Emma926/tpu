@@ -66,6 +66,7 @@ class InputReader(object):
         source_id = data['source_id']
         image = data['image']
         boxes = data['groundtruth_boxes']
+        print('boxes', boxes)
         classes = data['groundtruth_classes']
         classes = tf.reshape(tf.cast(classes, dtype=tf.float32), [-1, 1])
 

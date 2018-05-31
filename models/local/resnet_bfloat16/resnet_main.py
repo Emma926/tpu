@@ -121,7 +121,7 @@ flags.DEFINE_integer(
     help=('Number of TPU cores. For a single TPU device, this is 8 because each'
           ' TPU has 4 chips each with 2 cores.'))
 
-flags.DEFINE_string('mode', 'train_and_eval',
+flags.DEFINE_string('mode', 'train',
                     'Mode to run: train or eval (default: train)')
 
 flags.DEFINE_string(
@@ -224,6 +224,7 @@ def get_custom_getter():
     # triggered for them.
     if cast_to_bfloat16:
       var = tf.cast(var, tf.bfloat16)
+      print('to bfloat16', var)
     return var
 
   return inner_custom_getter
@@ -246,11 +247,11 @@ def resnet_model_fn(features, labels, mode, params):
   if isinstance(features, dict):
     features = features['feature']
 
-  if FLAGS.use_transpose:
-    features = tf.transpose(features, [3, 0, 1, 2])  # HWCN to NHCW
+  #if FLAGS.use_transpose:
+  #  features = tf.transpose(features, [3, 0, 1, 2])  # HWCN to NHCW
 
-  features = resnet_preprocessing.normalize(features)
-  features = tf.cast(features, tf.bfloat16)
+  #features = resnet_preprocessing.normalize(features)
+  #features = tf.cast(features, tf.bfloat16)
 
   # In most cases, the default data format NCHW instead of NHWC should be
   # used for a significant performance boost on GPU/TPU. NHWC should be used
@@ -447,29 +448,24 @@ def main(unused_argv):
           iterations_per_loop=FLAGS.iterations_per_loop,
           num_shards=FLAGS.num_cores))
 
-  batch_axis = 0
-  if FLAGS.use_transpose:
-    batch_axis = 3
+  #batch_axis = 0
+  #if FLAGS.use_transpose:
+  #  batch_axis = 3
   resnet_classifier = tpu_estimator.TPUEstimator(
       use_tpu=FLAGS.use_tpu,
       model_fn=resnet_model_fn,
       config=config,
-      train_batch_size=FLAGS.train_batch_size,
-      eval_batch_size=FLAGS.eval_batch_size,
-      batch_axis=(batch_axis, 0))
+      train_batch_size=FLAGS.train_batch_size)
 
   # Input pipelines are slightly different (with regards to shuffling and
   # preprocessing) between training and evaluation.
   imagenet_train = imagenet_input.ImageNetInput(
       is_training=True,
-      data_dir=FLAGS.data_dir,
-      num_parallel_calls=FLAGS.num_parallel_calls,
-      use_transpose=FLAGS.use_transpose)
+      data_dir=FLAGS.data_dir)
+
   imagenet_eval = imagenet_input.ImageNetInput(
       is_training=False,
-      data_dir=FLAGS.data_dir,
-      num_parallel_calls=FLAGS.num_parallel_calls,
-      use_transpose=FLAGS.use_transpose)
+      data_dir=FLAGS.data_dir)
 
   current_step = estimator._load_global_step_from_checkpoint_dir(FLAGS.model_dir)  # pylint: disable=protected-access,line-too-long
   start_timestamp = time.time()
