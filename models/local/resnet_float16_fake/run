@@ -1,0 +1,1 @@
+python resnet_main.py --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet --steps_per_eval=5000 --data_format=channels_first --steps_per_checkpoint=100 --train_steps=5000 --iterations_per_loop=1000 --train_batch_size=256 --model_dir=tmp --use_tpu=False
