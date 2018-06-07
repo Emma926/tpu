@@ -1,0 +1,43 @@
+/usr/local/lib/python2.7/dist-packages/h5py/__init__.py:36: FutureWarning: Conversion of the second argument of issubdtype from `float` to `np.floating` is deprecated. In future, it will be treated as `np.float64 == np.dtype(float).type`.
+  from ._conv import register_converters as _register_converters
+INFO:tensorflow:Using config: {'_save_checkpoints_secs': 600, '_keep_checkpoint_max': 5, '_task_type': 'worker', '_cluster_spec': <tensorflow.python.training.server_lib.ClusterSpec object at 0x7fcdc2846a90>, '_keep_checkpoint_every_n_hours': 10000, '_service': None, '_num_ps_replicas': 0, '_tpu_config': TPUConfig(iterations_per_loop=1000, num_shards=8, computation_shape=None, per_host_input_for_training=2, tpu_job_name=None, initial_infeed_sleep_secs=None), '_tf_random_seed': None, '_cluster': None, '_num_worker_replicas': 1, '_task_id': 0, '_log_step_count_steps': 1000, '_evaluation_master': '', '_global_id_in_cluster': 0, '_session_config': allow_soft_placement: true
+, '_train_distribute': None, '_is_chief': True, '_save_checkpoints_steps': None, '_save_summary_steps': 100, '_model_dir': 'gs://tpubenchmarking/tmp', '_master': u'grpc://10.240.1.10:8470'}
+INFO:tensorflow:Querying Tensorflow master (grpc://10.240.1.10:8470) for TPU system metadata.
+2018-06-06 05:09:20.923171: W tensorflow/core/distributed_runtime/rpc/grpc_session.cc:349] GrpcSession::ListDevices will initialize the session with an empty graph and other defaults because the session has not yet been created.
+INFO:tensorflow:Found TPU system:
+INFO:tensorflow:*** Num TPU Cores: 8
+INFO:tensorflow:*** Num TPU Workers: 1
+INFO:tensorflow:*** Num TPU Cores Per Worker: 8
+INFO:tensorflow:*** Available Device: _DeviceAttributes(/job:tpu_worker/replica:0/task:0/device:CPU:0, CPU, -1)
+INFO:tensorflow:*** Available Device: _DeviceAttributes(/job:tpu_worker/replica:0/task:0/device:XLA_CPU:0, XLA_CPU, 17179869184)
+INFO:tensorflow:*** Available Device: _DeviceAttributes(/job:tpu_worker/replica:0/task:0/device:XLA_GPU:0, XLA_GPU, 17179869184)
+INFO:tensorflow:*** Available Device: _DeviceAttributes(/job:tpu_worker/replica:0/task:0/device:TPU:0, TPU, 17179869184)
+INFO:tensorflow:*** Available Device: _DeviceAttributes(/job:tpu_worker/replica:0/task:0/device:TPU:1, TPU, 17179869184)
+INFO:tensorflow:*** Available Device: _DeviceAttributes(/job:tpu_worker/replica:0/task:0/device:TPU:2, TPU, 17179869184)
+INFO:tensorflow:*** Available Device: _DeviceAttributes(/job:tpu_worker/replica:0/task:0/device:TPU:3, TPU, 17179869184)
+INFO:tensorflow:*** Available Device: _DeviceAttributes(/job:tpu_worker/replica:0/task:0/device:TPU:4, TPU, 17179869184)
+INFO:tensorflow:*** Available Device: _DeviceAttributes(/job:tpu_worker/replica:0/task:0/device:TPU:5, TPU, 17179869184)
+INFO:tensorflow:*** Available Device: _DeviceAttributes(/job:tpu_worker/replica:0/task:0/device:TPU:6, TPU, 17179869184)
+INFO:tensorflow:*** Available Device: _DeviceAttributes(/job:tpu_worker/replica:0/task:0/device:TPU:7, TPU, 17179869184)
+INFO:tensorflow:*** Available Device: _DeviceAttributes(/job:tpu_worker/replica:0/task:0/device:TPU_SYSTEM:0, TPU_SYSTEM, 17179869184)
+INFO:tensorflow:Calling model_fn.
+134 ops no flops stats due to incomplete shapes.
+134 ops no flops stats due to incomplete shapes.
+INFO:tensorflow:Create CheckpointSaverHook.
+INFO:tensorflow:Done calling model_fn.
+INFO:tensorflow:TPU job name tpu_worker
+INFO:tensorflow:Graph was finalized.
+INFO:tensorflow:Running local_init_op.
+INFO:tensorflow:Done running local_init_op.
+INFO:tensorflow:Init TPU system
+INFO:tensorflow:Start infeed thread controller
+INFO:tensorflow:Starting infeed thread controller.
+INFO:tensorflow:Start outfeed thread controller
+INFO:tensorflow:Starting outfeed thread controller.
+INFO:tensorflow:Enqueue next (1000) batch(es) of data to infeed.
+INFO:tensorflow:Dequeue next (1000) batch(es) of data from outfeed.
+INFO:tensorflow:Saving checkpoints for 1000 into gs://tpubenchmarking/tmp/model.ckpt.
+INFO:tensorflow:loss = 0.0, step = 0
+INFO:tensorflow:loss = 0.0, step = 0
+INFO:tensorflow:Enqueue next (1000) batch(es) of data to infeed.
+INFO:tensorflow:Dequeue next (1000) batch(es) of data from outfeed.
