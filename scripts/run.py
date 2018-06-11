@@ -38,7 +38,7 @@ cmds = {
 #    --iterations_per_loop=$ITERATIONS\
 #    --train_batch_size=$BATCH_SIZE\
 #    --model_dir=gs://$GCS_BUCKET_NAME/tmp'),
-
+#
 #    'resnet_bfloat16_fake': ('resnet_bfloat16_fake', 'python resnet_main.py'\
 #    + ' --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet\
 #    --steps_per_eval=5000\
@@ -55,7 +55,7 @@ cmds = {
 #    + ' --alsologtostderr\
 #    -steps_per_checkpoint=100\
 #    --num_shards=8\
-#    --mode=\'train\'\
+#    --mode=train\
 #    --train_batch_size=$BATCH_SIZE\
 #    --train_steps=$TRAIN_STEPS\
 #    --iterations_per_loop=$ITERATIONS\
@@ -66,7 +66,7 @@ cmds = {
 #    + ' --alsologtostderr\
 #    -steps_per_checkpoint=100\
 #    --num_shards=8\
-#    --mode=\'train\'\
+#    --mode=train\
 #    --train_batch_size=$BATCH_SIZE\
 #    --train_steps=$TRAIN_STEPS\
 #    --iterations_per_loop=$ITERATIONS\
@@ -76,8 +76,8 @@ cmds = {
 #    'mobilenet': ('mobilenet', 'python mobilenet.py' \
 #    + ' --alsologtostderr\
 #    --num_shards=8\
-#    --mode=\'train\'\
-#    --use_data=\'real\'\
+#    --mode=train\
+#    --use_data=real\
 #    --train_batch_size=$BATCH_SIZE\
 #    --train_steps=$TRAIN_STEPS\
 #    --iterations=$ITERATIONS\
@@ -88,7 +88,7 @@ cmds = {
 #    'mobilenet_fake': ('mobilenet', 'python mobilenet.py' \
 #    + ' --alsologtostderr\
 #    --num_shards=8\
-#    --mode=\'train\'\
+#    --mode=train\
 #    --use_data=fake\
 #    --train_batch_size=$BATCH_SIZE\
 #    --train_steps=$TRAIN_STEPS\
@@ -100,7 +100,7 @@ cmds = {
 #    'mobilenet_bfloat16':('mobilenet_bfloat16', 'python mobilenet.py' \
 #    + ' --alsologtostderr\
 #    --num_shards=8\
-#    --mode=\'train\'\
+#    --mode=train\
 #    --use_data=real\
 #    --train_batch_size=$BATCH_SIZE\
 #    --train_steps=$TRAIN_STEPS\
@@ -108,31 +108,20 @@ cmds = {
 #    --save_checkpoints_secs=10\
 #    --model_dir=gs://$GCS_BUCKET_NAME/tmp\
 #    --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet'),
-#
+
 #    'mobilenet_bfloat16_fake':('mobilenet_bfloat16', 'python mobilenet.py' \
 #    + ' --alsologtostderr\
 #    --num_shards=8\
-#    --mode=\'train\'\
-#    --use_data=\'fake\'\
+#    --mode=train\
+#    --use_data=fake\
 #    --train_batch_size=$BATCH_SIZE\
 #    --train_steps=$TRAIN_STEPS\
 #    --iterations=$ITERATIONS\
 #    --save_checkpoints_secs=10\
 #    --model_dir=gs://$GCS_BUCKET_NAME/tmp\
 #    --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet'),
-
-    'retinanet':('retinanet', 'python retinanet_main.py'\
-    + ' --train_batch_size=$BATCH_SIZE\
-    --training_file_pattern=gs://$GCS_BUCKET_NAME/coco/train-* \
-    --resnet_checkpoint=gs://cloud-tpu-artifacts/resnet/resnet-nhwc-2018-02-07/model.ckpt-112603 \
-     --model_dir=gs://$GCS_BUCKET_NAME/tmp\
-    --iterations_per_loop=$ITERATIONS\
-    --train_steps=$TRAIN_STEPS\
-    --hparams=image_size=640 \
-    --num_examples_per_epoch=6400 \
-    --num_epochs=1'),
-    
-#    'retinanet_bfloat16':('retinanet_bfloat16', 'python retinanet_main.py'\
+#
+#    'retinanet':('retinanet', 'python retinanet_main.py'\
 #    + ' --train_batch_size=$BATCH_SIZE\
 #    --training_file_pattern=gs://$GCS_BUCKET_NAME/coco/train-* \
 #    --resnet_checkpoint=gs://cloud-tpu-artifacts/resnet/resnet-nhwc-2018-02-07/model.ckpt-112603 \
@@ -143,10 +132,20 @@ cmds = {
 #    --num_examples_per_epoch=6400 \
 #    --num_epochs=1'),
     
+    'retinanet_bfloat16':('retinanet_bfloat16', 'python retinanet_main.py'\
+    + ' --train_batch_size=$BATCH_SIZE\
+    --training_file_pattern=gs://$GCS_BUCKET_NAME/coco/train-* \
+    --resnet_checkpoint=gs://cloud-tpu-artifacts/resnet/resnet-nhwc-2018-02-07/model.ckpt-112603 \
+     --model_dir=gs://$GCS_BUCKET_NAME/tmp\
+    --iterations_per_loop=$ITERATIONS\
+    --train_steps=$TRAIN_STEPS\
+    --hparams=image_size=640 \
+    --num_examples_per_epoch=6400 \
+    --num_epochs=1'),
+    
 #    'squeezenet':('squeezenet','python squeezenet_main.py' \
 #    + ' --alsologtostderr\
 #    --num_shards=8\
-#    --optimizer=\'rmsprop\'\
 #    --num_evals=0\
 #    --batch_size=$BATCH_SIZE\
 #    --train_steps=$TRAIN_STEPS\
@@ -154,11 +153,10 @@ cmds = {
 #    --save_checkpoints_secs=10\
 #    --model_dir=gs://$GCS_BUCKET_NAME/tmp\
 #    --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet'),
-
+#
 #    'squeezenet_fake':('squeezenet_fake','python squeezenet_main.py' \
 #    + ' --alsologtostderr\
 #    --num_shards=8\
-#    --optimizer=\'rmsprop\'\
 #    --num_evals=0\
 #    --batch_size=$BATCH_SIZE\
 #    --train_steps=$TRAIN_STEPS\
@@ -170,7 +168,6 @@ cmds = {
 #    'squeezenet_bfloat16':('squeezenet_bfloat16','python squeezenet_main.py' \
 #    + ' --alsologtostderr\
 #    --num_shards=8\
-#    --optimizer=\'rmsprop\'\
 #    --num_evals=0\
 #    --batch_size=$BATCH_SIZE\
 #    --train_steps=$TRAIN_STEPS\
@@ -178,11 +175,10 @@ cmds = {
 #    --save_checkpoints_secs=10\
 #    --model_dir=gs://$GCS_BUCKET_NAME/tmp\
 #    --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet'),
-
+#
 #    'squeezenet_bfloat16_fake':('squeezenet_bfloat16_fake','python squeezenet_main.py' \
 #    + ' --alsologtostderr\
 #    --num_shards=8\
-#    --optimizer=\'rmsprop\'\
 #    --num_evals=0\
 #    --batch_size=$BATCH_SIZE\
 #    --train_steps=$TRAIN_STEPS\
@@ -208,6 +204,8 @@ for config in configs:
         #if not os.path.isdir(os.path.join(out_path, name)):
         #    print('Creating new directory: ' + os.path.join(out_path, name))
         #    os.makedirs(os.path.join(out_path, name))
+        if 'retina' in name:
+          batch_size = 64
 
         os.system('gsutil rm -r gs://' + GCS_BUCKET_NAME + '/tmp')
         file_name = name + '-batchsize_' + str(batch_size) + '-iteration_' + str(iterations) + '-trainsteps_' + str(train_steps)
@@ -236,7 +234,6 @@ for config in configs:
 
         print(name, os.path.join(out_path, file_name + '.err'))
         print(cmd)
-        break
         print('python /home/wangyu/tpu/scripts/capture_tpu.py ' + name)
         outfile = open(os.path.join(out_path, file_name + '.out'), 'w')
         errfile = open(os.path.join(out_path, file_name + '.err'), 'w')
