@@ -68,10 +68,10 @@ class InputReader(object):
 #        image = data['image']
 #        boxes = data['groundtruth_boxes']
 #        classes = data['groundtruth_classes']
-#        classes = tf.reshape(tf.cast(classes, dtype=tf.float32), [-1, 1])
+#        classes = tf.reshape(tf.cast(classes, dtype=tf.bfloat16), [-1, 1])
 #
 #        # the image normalization is identical to Cloud TPU ResNet-50
-#        image = tf.image.convert_image_dtype(image, dtype=tf.float32)
+#        image = tf.image.convert_image_dtype(image, dtype=tf.bfloat16)
 #        image = _normalize_image(image)
 #
 #        if params['input_rand_hflip']:
@@ -91,7 +91,7 @@ class InputReader(object):
 #        (cls_targets, box_targets,
 #         num_positives) = anchor_labeler.label_anchors(boxes, classes)
 #
-#        source_id = tf.string_to_number(source_id, out_type=tf.float32)
+#        source_id = tf.string_to_number(source_id, out_type=tf.bfloat16)
 #        row = (image, cls_targets, box_targets, num_positives, source_id,
 #               image_scale)
 #        return row
@@ -140,27 +140,27 @@ class InputReader(object):
 
     shapes = [80, 40, 20, 10, 5]
     c = 0
-    labels['mean_num_positives'] = tf.random_uniform([batch_size, 1], minval=0, maxval=0.5, dtype=tf.float32)
+    labels['mean_num_positives'] = tf.random_uniform([batch_size, 1], minval=0, maxval=0.5, dtype=tf.bfloat16)
     for level in range(params['min_level'], params['max_level'] + 1):
-      #labels['cls_targets_%d' % level] = tf.constant(np.zeros((batch_size, 80, 80, 540)).astype(np.float32), tf.float32)
-      #labels['cls_targets_%d' % level] = tf.random_uniform([batch_size, shapes[c], shapes[c], 540], minval=0, maxval=0.5, dtype=tf.float32)
-      labels['cls_targets_%d' % level] = tf.zeros([batch_size, shapes[c], shapes[c], 540], dtype=tf.float32)
+      #labels['cls_targets_%d' % level] = tf.constant(np.zeros((batch_size, 80, 80, 540)).astype(np.bfloat16), tf.bfloat16)
+      #labels['cls_targets_%d' % level] = tf.random_uniform([batch_size, shapes[c], shapes[c], 540], minval=0, maxval=0.5, dtype=tf.bfloat16)
+      labels['cls_targets_%d' % level] = tf.zeros([batch_size, shapes[c], shapes[c], 540], dtype=tf.bfloat16)
       #print(cls_targets[level])
       #print(box_targets[level])
-      #labels['box_targets_%d' % level] = tf.constant(np.zeros((batch_size, 80, 80, 24)).astype(np.float32), tf.float32)
-      #labels['box_targets_%d' % level] = tf.random_uniform([batch_size, shapes[c], shapes[c], 24], minval=0, maxval=0.5, dtype=tf.float32)
-      labels['box_targets_%d' % level] = tf.zeros([batch_size, shapes[c], shapes[c], 24], dtype=tf.float32)
+      #labels['box_targets_%d' % level] = tf.constant(np.zeros((batch_size, 80, 80, 24)).astype(np.bfloat16), tf.bfloat16)
+      #labels['box_targets_%d' % level] = tf.random_uniform([batch_size, shapes[c], shapes[c], 24], minval=0, maxval=0.5, dtype=tf.bfloat16)
+      labels['box_targets_%d' % level] = tf.zeros([batch_size, shapes[c], shapes[c], 24], dtype=tf.bfloat16)
       c += 1
     #print(source_ids)
     #print(image_scales)
-    #labels['source_ids'] = tf.constant(np.zeros((batch_size,)).astype(np.float32), tf.float32)
-    #labels['source_ids'] = tf.random_uniform([batch_size], minval=0, maxval=0.5, dtype=tf.float32)
-    labels['source_ids'] = tf.zeros([batch_size], dtype=tf.float32)
-    #labels['image_scales'] = tf.constant(np.zeros((batch_size,)).astype(np.float32), tf.float32)
-    labels['image_scales'] = tf.zeros([batch_size], dtype=tf.float32)
+    #labels['source_ids'] = tf.constant(np.zeros((batch_size,)).astype(np.bfloat16), tf.bfloat16)
+    #labels['source_ids'] = tf.random_uniform([batch_size], minval=0, maxval=0.5, dtype=tf.bfloat16)
+    labels['source_ids'] = tf.zeros([batch_size], dtype=tf.bfloat16)
+    #labels['image_scales'] = tf.constant(np.zeros((batch_size,)).astype(np.bfloat16), tf.bfloat16)
+    labels['image_scales'] = tf.zeros([batch_size], dtype=tf.bfloat16)
     #print(images)
-    #images = tf.constant(np.zeros((batch_size, 640, 640, 3)).astype(np.float32), tf.float32)
-    #images = tf.random_uniform([batch_size, 640, 640, 3], minval=0, maxval=0, dtype=tf.float32)
-    images = tf.zeros([batch_size, 640, 640, 3], dtype=tf.float32)
+    #images = tf.constant(np.zeros((batch_size, 640, 640, 3)).astype(np.bfloat16), tf.bfloat16)
+    #images = tf.random_uniform([batch_size, 640, 640, 3], minval=0, maxval=0, dtype=tf.bfloat16)
+    images = tf.zeros([batch_size, 640, 640, 3], dtype=tf.bfloat16)
     print(images.shape)
     return images, labels
