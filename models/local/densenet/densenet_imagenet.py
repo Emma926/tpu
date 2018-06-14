@@ -128,7 +128,7 @@ tf.flags.DEFINE_integer(
 # recent checkpoint every 10 minutes by default for train_and_eval
 tf.flags.DEFINE_string(
     "mode",
-    default="train_and_eval",
+    default="train",
     help=("Mode to run: train, eval, train_and_eval "
           "(default, interleaved train & eval)."))
 

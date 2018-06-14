@@ -91,6 +91,15 @@ class InputReader(object):
          num_positives) = anchor_labeler.label_anchors(boxes, classes)
 
         source_id = tf.string_to_number(source_id, out_type=tf.float32)
+
+        image = tf.cast(image, tf.bfloat16)
+#        source_id = tf.cast(source_id, tf.bfloat16)
+#        for k,v in cls_targets.iteritems():
+#          cls_targets[k] = tf.cast(v, tf.bfloat16)
+#        for k,v in box_targets.iteritems():
+#          box_targets[k] = tf.cast(v, tf.bfloat16)
+#        image_scale = tf.cast(image_scale, tf.bfloat16)
+        
         row = (image, cls_targets, box_targets, num_positives, source_id,
                image_scale)
         return row

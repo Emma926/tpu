@@ -94,7 +94,7 @@ tf.flags.DEFINE_integer(
     'Number of training steps to run between evaluations.')
 
 tf.flags.DEFINE_string(
-    'mode', 'train_and_eval',
+    'mode', 'train',
     'Mode to run: train, eval, train_and_eval')
 
 tf.flags.DEFINE_integer(

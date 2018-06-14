@@ -97,6 +97,7 @@ def _classification_loss(cls_outputs,
                          gamma=2.0):
   """Computes classification loss."""
   normalizer = num_positives
+  cls_targets = tf.cast(cls_targets, tf.float32)
   classification_loss = focal_loss(cls_outputs, cls_targets, alpha, gamma,
                                    normalizer)
   return classification_loss
@@ -115,6 +116,7 @@ def _box_loss(box_outputs, box_targets, num_positives, delta=0.1):
       weights=mask,
       delta=delta,
       reduction=tf.losses.Reduction.SUM)
+  #normalizer = tf.cast(normalizer, dtype=tf.float32)
   box_loss /= normalizer
   return box_loss
 
@@ -165,6 +167,7 @@ def _detection_loss(cls_outputs, box_outputs, labels, params):
             delta=params['delta']))
 
   # Sum per level losses to total loss.
+  #cls_loss = tf.cast(tf.add_n(cls_losses), dtype=tf.float32)
   cls_loss = tf.add_n(cls_losses)
   box_loss = tf.add_n(box_losses)
   total_loss = cls_loss + params['box_loss_weight'] * box_loss
@@ -230,7 +233,7 @@ def _model_fn(features, labels, mode, params, model):
     tpu_spec: the TPUEstimatorSpec to run training, evaluation, or prediction.
   """
 
-  ProfileOptionBuilder = tf.profiler.ProfileOptionBuilder
+#  ProfileOptionBuilder = tf.profiler.ProfileOptionBuilder
 
   with tf.variable_scope('cg', custom_getter=get_custom_getter()):
     cls_outputs, box_outputs = model(
@@ -240,7 +243,14 @@ def _model_fn(features, labels, mode, params, model):
       num_classes=params['num_classes'],
       num_anchors=len(params['aspect_ratios'] * params['num_scales']),
       is_training_bn=params['is_training_bn'])
+    #for k,v in cls_outputs.iteritems():
+    #  cls_outputs[k] = tf.cast(v, tf.float32)
+    #for k,v in box_outputs.iteritems():
+    #  box_outputs[k] = tf.cast(v, tf.float32)
     levels = cls_outputs.keys()
+    for level in levels:
+      cls_outputs[level] = tf.cast(cls_outputs[level], tf.float32)
+      box_outputs[level] = tf.cast(box_outputs[level], tf.float32)
 
   # First check if it is in PREDICT mode.
   if mode == tf.estimator.ModeKeys.PREDICT:
@@ -341,12 +351,12 @@ def _model_fn(features, labels, mode, params, model):
       metric_fn_inputs['box_outputs_%d' % level] = box_outputs[level]
     eval_metrics = (metric_fn, metric_fn_inputs)
 
-  param_stats = tf.profiler.profile(
-    tf.get_default_graph(),
-    options=ProfileOptionBuilder.trainable_variables_parameter())
-  fl_stats = tf.profiler.profile(
-    tf.get_default_graph(),
-    options=tf.profiler.ProfileOptionBuilder.float_operation())
+#  param_stats = tf.profiler.profile(
+#    tf.get_default_graph(),
+#    options=ProfileOptionBuilder.trainable_variables_parameter())
+#  fl_stats = tf.profiler.profile(
+#    tf.get_default_graph(),
+#    options=tf.profiler.ProfileOptionBuilder.float_operation())
 
   return tpu_estimator.TPUEstimatorSpec(
       mode=mode,
