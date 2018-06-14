@@ -17,8 +17,9 @@ count = 0
 
 os.system('gsutil rm -r gs://tpubenchmarking/tpu_trace/' + folder)
 
-while(1):
+#while(1):
+while count <= 10:
   os.system(cmd + '/' + folder) 
   count += 1
-  time.sleep(60)
+  #time.sleep(60)
  
