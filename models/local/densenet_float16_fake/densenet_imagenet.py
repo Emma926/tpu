@@ -50,6 +50,11 @@ tf.flags.DEFINE_string(
     help="Name of the Cloud TPU for Cluster Resolvers. You must specify either "
     "this flag or --master.")
 
+tf.flags.DEFINE_bool(
+    'use_tpu', True,
+    help=('Use TPU to execute the model for training and evaluation. If'
+          ' --use_tpu=false, will use whatever devices are available to'
+          ' TensorFlow by default (e.g. CPU and GPU)'))
 # Model specific paramenters
 tf.flags.DEFINE_string(
     "master", default=None,
@@ -283,7 +288,8 @@ def model_fn(features, labels, mode, params):
   if mode == tf.estimator.ModeKeys.TRAIN:
     optimizer = tf.train.MomentumOptimizer(
         learning_rate=learning_rate, momentum=_MOMENTUM)
-    optimizer = tpu_optimizer.CrossShardOptimizer(optimizer)
+    if FLAGS.use_tpu==True:
+      optimizer = tpu_optimizer.CrossShardOptimizer(optimizer)
 
     # Batch norm requires update_ops to be added as a train_op dependency.
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
@@ -318,21 +324,25 @@ def model_fn(features, labels, mode, params):
 ProfileOptionBuilder = tf.profiler.ProfileOptionBuilder
 
 def main(unused_argv):
-  if FLAGS.master is None and FLAGS.tpu_name is None:
-    raise RuntimeError("You must specify either --master or --tpu_name.")
-
-  if FLAGS.master is not None:
-    if FLAGS.tpu_name is not None:
-      tf.logging.warn("Both --master and --tpu_name are set. Ignoring "
-                      "--tpu_name and using --master.")
-    tpu_grpc_url = FLAGS.master
+  if FLAGS.use_tpu:
+    if FLAGS.master is None and FLAGS.tpu_name is None:
+      raise RuntimeError("You must specify either --master or --tpu_name.")
+  
+    if FLAGS.master is not None:
+      if FLAGS.tpu_name is not None:
+        tf.logging.warn("Both --master and --tpu_name are set. Ignoring "
+                        "--tpu_name and using --master.")
+      tpu_grpc_url = FLAGS.master
+    else:
+      tpu_cluster_resolver = (
+          tf.contrib.cluster_resolver.TPUClusterResolver(
+              FLAGS.tpu_name,
+              zone=FLAGS.tpu_zone,
+              project=FLAGS.gcp_project))
+      tpu_grpc_url = tpu_cluster_resolver.get_master()
   else:
-    tpu_cluster_resolver = (
-        tf.contrib.cluster_resolver.TPUClusterResolver(
-            FLAGS.tpu_name,
-            zone=FLAGS.tpu_zone,
-            project=FLAGS.gcp_project))
-    tpu_grpc_url = tpu_cluster_resolver.get_master()
+    # URL is unused if running locally without TPU
+    tpu_grpc_url = None
 
   batches_per_epoch = _NUM_TRAIN_IMAGES / FLAGS.train_batch_size
   steps_per_checkpoint = FLAGS.steps_per_checkpoint
@@ -356,6 +366,7 @@ def main(unused_argv):
           iterations_per_loop=iterations_per_loop, num_shards=FLAGS.num_shards))
 
   densenet_estimator = tpu_estimator.TPUEstimator(
+      use_tpu=FLAGS.use_tpu,
       model_fn=model_fn,
       config=config,
       train_batch_size=FLAGS.train_batch_size,
