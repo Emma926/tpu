@@ -1,0 +1,110 @@
+89,90c89
+<     #'train_steps', default=112590,
+<     'train_steps', default=500,
+---
+>     'train_steps', default=112590,
+130,131c129
+<     #default='channels_last',
+<     default='channels_first',
+---
+>     default='channels_last',
+212,232d209
+< #  def inner_custom_getter(getter, *args, **kwargs):
+< #    """Custom getter that forces variables to have type self.variable_type."""
+< #    cast_to_bfloat16 = False
+< #    requested_dtype = kwargs['dtype']
+< #    if requested_dtype == tf.float16:
+< #      # Only change the variable dtype if doing so does not decrease variable
+< #      # precision.
+< #      kwargs['dtype'] = tf.float32
+< #      cast_to_bfloat16 = True
+< #    var = getter(*args, **kwargs)
+< #    # This if statement is needed to guard the cast, because batch norm
+< #    # assigns directly to the return value of this custom getter. The cast
+< #    # makes the return value not a variable so it cannot be assigned. Batch
+< #    # norm variables are always in fp32 so this if statement is never
+< #    # triggered for them.
+< #    if cast_to_bfloat16:
+< #      var = tf.cast(var, tf.float16)
+< #    return var
+< #
+< #  return inner_custom_getter
+< 
+234,248c211,228
+<       """Custom getter that forces variables to have type self.variable_type."""
+<       requested_dtype = kwargs['dtype']
+<       if not (requested_dtype == tf.float32):
+<         # Only change the variable dtype if doing so does not decrease variable
+<         # precision.
+<         kwargs['dtype'] = tf.float32
+<       var = getter(*args, **kwargs)
+<       # This if statement is needed to guard the cast, because batch norm
+<       # assigns directly to the return value of this custom getter. The cast
+<       # makes the return value not a variable so it cannot be assigned. Batch
+<       # norm variables are always in fp32 so this if statement is never
+<       # triggered for them.
+<       if var.dtype.base_dtype != requested_dtype:
+<         var = tf.cast(var, requested_dtype)
+<       return var
+---
+>     """Custom getter that forces variables to have type self.variable_type."""
+>     cast_to_bfloat16 = False
+>     requested_dtype = kwargs['dtype']
+>     if requested_dtype == tf.bfloat16:
+>       # Only change the variable dtype if doing so does not decrease variable
+>       # precision.
+>       kwargs['dtype'] = tf.float32
+>       cast_to_bfloat16 = True
+>     var = getter(*args, **kwargs)
+>     # This if statement is needed to guard the cast, because batch norm
+>     # assigns directly to the return value of this custom getter. The cast
+>     # makes the return value not a variable so it cannot be assigned. Batch
+>     # norm variables are always in fp32 so this if statement is never
+>     # triggered for them.
+>     if cast_to_bfloat16:
+>       var = tf.cast(var, tf.bfloat16)
+>     return var
+> 
+250a231
+> 
+272c253
+<   features = tf.cast(features, tf.float16)
+---
+>   features = tf.cast(features, tf.bfloat16)
+314,317c295,298
+<   #loss = cross_entropy + WEIGHT_DECAY * tf.add_n(
+<   #    [tf.nn.l2_loss(v) for v in tf.trainable_variables()
+<   #     if 'batch_normalization' not in v.name])
+<   loss = cross_entropy
+---
+>   loss = cross_entropy + WEIGHT_DECAY * tf.add_n(
+>       [tf.nn.l2_loss(v) for v in tf.trainable_variables()
+>        if 'batch_normalization' not in v.name])
+> 
+329,330d309
+<     #optimizer = tf.train.GradientDescentOptimizer(
+<     #      learning_rate=learning_rate)
+466,467d444
+<       session_config=tf.ConfigProto(
+<           allow_soft_placement=True, log_device_placement=False, gpu_options=tf.GPUOptions(allow_growth=True)),
+
+
+imagenet_input
+60c60
+<       lambda x: (tf.cast(tf.constant(np.zeros((224, 224, 3)).astype(np.float16), tf.float16), tf.float16),
+---
+>       lambda x: (tf.cast(tf.constant(np.zeros((224, 224, 3)).astype(np.float32), tf.float32), tf.bfloat16),
+72,81d71
+<     
+< #  def input_fn(self, params):
+< #      batch_size = params['batch_size']
+< #      print('images input:', batch_size)
+< #      images = tf.random_uniform(
+< #        [batch_size, 224, 224, 3], minval=-0.5, maxval=0.5, dtype=tf.float16)
+< #      labels = tf.random_uniform(
+< #        [batch_size], maxval=1000, dtype=tf.int32) 
+< #      images = tf.transpose(images, [1, 2, 3, 0])
+< #      return images, labels
+
+
+
