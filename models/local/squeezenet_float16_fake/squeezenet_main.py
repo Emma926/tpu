@@ -76,21 +76,25 @@ FLAGS = tf.flags.FLAGS
 def main(argv):
   del argv
 
-  if FLAGS.master is None and FLAGS.tpu_name is None:
-    raise RuntimeError("You must specify either --master or --tpu_name.")
-
-  if FLAGS.master is not None:
-    if FLAGS.tpu_name is not None:
-      tf.logging.warn("Both --master and --tpu_name are set. Ignoring "
-                      "--tpu_name and using --master.")
-    tpu_grpc_url = FLAGS.master
+  if FLAGS.use_tpu:
+    if FLAGS.master is None and FLAGS.tpu_name is None:
+      raise RuntimeError("You must specify either --master or --tpu_name.")
+  
+    if FLAGS.master is not None:
+      if FLAGS.tpu_name is not None:
+        tf.logging.warn("Both --master and --tpu_name are set. Ignoring "
+                        "--tpu_name and using --master.")
+      tpu_grpc_url = FLAGS.master
+    else:
+      tpu_cluster_resolver = (
+          tf.contrib.cluster_resolver.TPUClusterResolver(
+              FLAGS.tpu_name,
+              zone=FLAGS.tpu_zone,
+              project=FLAGS.gcp_project))
+      tpu_grpc_url = tpu_cluster_resolver.get_master()
   else:
-    tpu_cluster_resolver = (
-        tf.contrib.cluster_resolver.TPUClusterResolver(
-            FLAGS.tpu_name,
-            zone=FLAGS.tpu_zone,
-            project=FLAGS.gcp_project))
-    tpu_grpc_url = tpu_cluster_resolver.get_master()
+    # URL is unused if running locally without TPU
+    tpu_grpc_url = None
 
   training_examples = 1300 * 1000 * FLAGS.num_epochs
   eval_examples = 50 * 1000

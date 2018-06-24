@@ -364,6 +364,8 @@ def main(unused_argv):
       master=tpu_grpc_url,
       evaluation_master=tpu_grpc_url,
       model_dir=FLAGS.model_dir,
+      session_config=tf.ConfigProto(
+           allow_soft_placement=True, log_device_placement=False, gpu_options=tf.GPUOptions(allow_growth=True)),
       tpu_config=tpu_config.TPUConfig(
           iterations_per_loop=FLAGS.iterations_per_loop,
           num_shards=FLAGS.num_cores))

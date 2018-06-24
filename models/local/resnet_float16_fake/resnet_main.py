@@ -209,44 +209,28 @@ def get_custom_getter():
   storing the variable as the requested dtype.
   """
 
-#  def inner_custom_getter(getter, *args, **kwargs):
-#    """Custom getter that forces variables to have type self.variable_type."""
-#    cast_to_bfloat16 = False
-#    requested_dtype = kwargs['dtype']
-#    if requested_dtype == tf.float16:
-#      # Only change the variable dtype if doing so does not decrease variable
-#      # precision.
-#      kwargs['dtype'] = tf.float32
-#      cast_to_bfloat16 = True
-#    var = getter(*args, **kwargs)
-#    # This if statement is needed to guard the cast, because batch norm
-#    # assigns directly to the return value of this custom getter. The cast
-#    # makes the return value not a variable so it cannot be assigned. Batch
-#    # norm variables are always in fp32 so this if statement is never
-#    # triggered for them.
-#    if cast_to_bfloat16:
-#      var = tf.cast(var, tf.float16)
-#    return var
-#
-#  return inner_custom_getter
-
   def inner_custom_getter(getter, *args, **kwargs):
-      """Custom getter that forces variables to have type self.variable_type."""
-      requested_dtype = kwargs['dtype']
-      if not (requested_dtype == tf.float32):
-        # Only change the variable dtype if doing so does not decrease variable
-        # precision.
-        kwargs['dtype'] = tf.float32
-      var = getter(*args, **kwargs)
-      # This if statement is needed to guard the cast, because batch norm
-      # assigns directly to the return value of this custom getter. The cast
-      # makes the return value not a variable so it cannot be assigned. Batch
-      # norm variables are always in fp32 so this if statement is never
-      # triggered for them.
-      if var.dtype.base_dtype != requested_dtype:
-        var = tf.cast(var, requested_dtype)
-      return var
+    """Custom getter that forces variables to have type self.variable_type."""
+    cast_to_bfloat16 = False
+    requested_dtype = kwargs['dtype']
+    if requested_dtype == tf.float16:
+      # Only change the variable dtype if doing so does not decrease variable
+      # precision.
+      kwargs['dtype'] = tf.float32
+      cast_to_bfloat16 = True
+    var = getter(*args, **kwargs)
+    # This if statement is needed to guard the cast, because batch norm
+    # assigns directly to the return value of this custom getter. The cast
+    # makes the return value not a variable so it cannot be assigned. Batch
+    # norm variables are always in fp32 so this if statement is never
+    # triggered for them.
+    if cast_to_bfloat16:
+      var = tf.cast(var, tf.float16)
+      print('tf.float16', args, kwargs, var)
+    return var
+
   return inner_custom_getter
+
 
 def resnet_model_fn(features, labels, mode, params):
   """The model_fn for ResNet to be used with TPUEstimator.
@@ -268,8 +252,8 @@ def resnet_model_fn(features, labels, mode, params):
   if FLAGS.use_transpose:
     features = tf.transpose(features, [3, 0, 1, 2])  # HWCN to NHCW
 
-  features = resnet_preprocessing.normalize(features)
-  features = tf.cast(features, tf.float16)
+  #features = resnet_preprocessing.normalize(features)
+  #features = tf.cast(features, tf.float16)
 
   # In most cases, the default data format NCHW instead of NHWC should be
   # used for a significant performance boost on GPU/TPU. NHWC should be used
@@ -336,88 +320,88 @@ def resnet_model_fn(features, labels, mode, params):
 
     # Batch normalization requires UPDATE_OPS to be added as a dependency to
     # the train operation.
-    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-    with tf.control_dependencies(update_ops):
-      train_op = optimizer.minimize(loss, global_step)
+    #update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+    #with tf.control_dependencies(update_ops):
+    train_op = optimizer.minimize(loss, global_step)
 
     # To log the loss, current learning rate, and epoch for Tensorboard, the
     # summary op needs to be run on the host CPU via host_call. host_call
     # expects [batch_size, ...] Tensors, thus reshape to introduce a batch
     # dimension. These Tensors are implicitly broadcasted to
     # [params['batch_size'], ].
-    gs_t = tf.reshape(tf.cast(global_step, tf.int32), [1])
-    loss_t = tf.reshape(loss, [1])
-    lr_t = tf.reshape(learning_rate, [1])
-    ce_t = tf.reshape(current_epoch, [1])
-
-    def host_call_fn(gs, loss, lr, ce):
-      """Training host call. Creates scalar summaries for training metrics.
-
-      This function is executed on the CPU and should not directly reference
-      any Tensors in the rest of the `model_fn`. To pass Tensors from the model
-      to the `metric_fn`, provide as part of the `host_call`. See
-      https://www.tensorflow.org/api_docs/python/tf/contrib/tpu/TPUEstimatorSpec
-      for more information.
-
-      Arguments should match the list of `Tensor` objects passed as the second
-      element in the tuple passed to `host_call`.
-
-      Args:
-        gs: `Tensor with shape `[batch, ]` for the global_step
-        loss: `Tensor` with shape `[batch, ]` for the training loss.
-        lr: `Tensor` with shape `[batch, ]` for the learning_rate.
-        ce: `Tensor` with shape `[batch, ]` for the current_epoch.
-
-      Returns:
-        List of summary ops to run on the CPU host.
-      """
-      # Outfeed supports int32 but global_step is expected to be int64.
-      gs = tf.cast(tf.reduce_mean(gs), tf.int64)
-      with summary.create_file_writer(FLAGS.model_dir).as_default():
-        with summary.always_record_summaries():
-          summary.scalar('loss', tf.reduce_mean(loss), step=gs)
-          summary.scalar('learning_rate', tf.reduce_mean(lr), step=gs)
-          summary.scalar('current_epoch', tf.reduce_mean(ce), step=gs)
-
-          return summary.all_summary_ops()
-
-    host_call = (host_call_fn, [gs_t, loss_t, lr_t, ce_t])
+#    gs_t = tf.reshape(tf.cast(global_step, tf.int32), [1])
+#    loss_t = tf.reshape(loss, [1])
+#    lr_t = tf.reshape(learning_rate, [1])
+#    ce_t = tf.reshape(current_epoch, [1])
+#
+#    def host_call_fn(gs, loss, lr, ce):
+#      """Training host call. Creates scalar summaries for training metrics.
+#
+#      This function is executed on the CPU and should not directly reference
+#      any Tensors in the rest of the `model_fn`. To pass Tensors from the model
+#      to the `metric_fn`, provide as part of the `host_call`. See
+#      https://www.tensorflow.org/api_docs/python/tf/contrib/tpu/TPUEstimatorSpec
+#      for more information.
+#
+#      Arguments should match the list of `Tensor` objects passed as the second
+#      element in the tuple passed to `host_call`.
+#
+#      Args:
+#        gs: `Tensor with shape `[batch, ]` for the global_step
+#        loss: `Tensor` with shape `[batch, ]` for the training loss.
+#        lr: `Tensor` with shape `[batch, ]` for the learning_rate.
+#        ce: `Tensor` with shape `[batch, ]` for the current_epoch.
+#
+#      Returns:
+#        List of summary ops to run on the CPU host.
+#      """
+#      # Outfeed supports int32 but global_step is expected to be int64.
+#      gs = tf.cast(tf.reduce_mean(gs), tf.int64)
+#      with summary.create_file_writer(FLAGS.model_dir).as_default():
+#        with summary.always_record_summaries():
+#          summary.scalar('loss', tf.reduce_mean(loss), step=gs)
+#          summary.scalar('learning_rate', tf.reduce_mean(lr), step=gs)
+#          summary.scalar('current_epoch', tf.reduce_mean(ce), step=gs)
+#
+#          return summary.all_summary_ops()
+#
+#    host_call = (host_call_fn, [gs_t, loss_t, lr_t, ce_t])
 
   else:
     train_op = None
 
-  eval_metrics = None
-  if mode == tf.estimator.ModeKeys.EVAL:
-    def metric_fn(labels, logits):
-      """Evaluation metric function. Evaluates accuracy.
-
-      This function is executed on the CPU and should not directly reference
-      any Tensors in the rest of the `model_fn`. To pass Tensors from the model
-      to the `metric_fn`, provide as part of the `eval_metrics`. See
-      https://www.tensorflow.org/api_docs/python/tf/contrib/tpu/TPUEstimatorSpec
-      for more information.
-
-      Arguments should match the list of `Tensor` objects passed as the second
-      element in the tuple passed to `eval_metrics`.
-
-      Args:
-        labels: `Tensor` with shape `[batch, ]`.
-        logits: `Tensor` with shape `[batch, num_classes]`.
-
-      Returns:
-        A dict of the metrics to return from evaluation.
-      """
-      predictions = tf.argmax(logits, axis=1)
-      top_1_accuracy = tf.metrics.accuracy(labels, predictions)
-      in_top_5 = tf.cast(tf.nn.in_top_k(logits, labels, 5), tf.float32)
-      top_5_accuracy = tf.metrics.mean(in_top_5)
-
-      return {
-          'top_1_accuracy': top_1_accuracy,
-          'top_5_accuracy': top_5_accuracy,
-      }
-
-    eval_metrics = (metric_fn, [labels, logits])
+#  eval_metrics = None
+#  if mode == tf.estimator.ModeKeys.EVAL:
+#    def metric_fn(labels, logits):
+#      """Evaluation metric function. Evaluates accuracy.
+#
+#      This function is executed on the CPU and should not directly reference
+#      any Tensors in the rest of the `model_fn`. To pass Tensors from the model
+#      to the `metric_fn`, provide as part of the `eval_metrics`. See
+#      https://www.tensorflow.org/api_docs/python/tf/contrib/tpu/TPUEstimatorSpec
+#      for more information.
+#
+#      Arguments should match the list of `Tensor` objects passed as the second
+#      element in the tuple passed to `eval_metrics`.
+#
+#      Args:
+#        labels: `Tensor` with shape `[batch, ]`.
+#        logits: `Tensor` with shape `[batch, num_classes]`.
+#
+#      Returns:
+#        A dict of the metrics to return from evaluation.
+#      """
+#      predictions = tf.argmax(logits, axis=1)
+#      top_1_accuracy = tf.metrics.accuracy(labels, predictions)
+#      in_top_5 = tf.cast(tf.nn.in_top_k(logits, labels, 5), tf.float32)
+#      top_5_accuracy = tf.metrics.mean(in_top_5)
+#
+#      return {
+#          'top_1_accuracy': top_1_accuracy,
+#          'top_5_accuracy': top_5_accuracy,
+#      }
+#
+#    eval_metrics = (metric_fn, [labels, logits])
 
   param_stats = tf.profiler.profile(
     tf.get_default_graph(),
@@ -429,9 +413,9 @@ def resnet_model_fn(features, labels, mode, params):
   return tpu_estimator.TPUEstimatorSpec(
       mode=mode,
       loss=loss,
-      train_op=train_op,
-      host_call=host_call,
-      eval_metrics=eval_metrics)
+      train_op=train_op)
+      #host_call=host_call,
+      #eval_metrics=eval_metrics)
 
 
 ProfileOptionBuilder = tf.profiler.ProfileOptionBuilder

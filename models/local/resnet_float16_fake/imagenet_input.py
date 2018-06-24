@@ -56,9 +56,12 @@ class ImageNetInput(object):
 
   def input_fn(self, params):
     batch_size = params['batch_size']
+    #dataset = tf.data.Dataset.range(1).repeat().map(
+    #  lambda x: (tf.cast(tf.constant(np.zeros((224, 224, 3)).astype(np.float16), tf.float16), tf.float16),
+    #             tf.constant(0, tf.int32)))
     dataset = tf.data.Dataset.range(1).repeat().map(
-      lambda x: (tf.cast(tf.constant(np.zeros((224, 224, 3)).astype(np.float16), tf.float16), tf.float16),
-                 tf.constant(0, tf.int32)))
+      lambda x: (tf.cast(tf.constant(np.random.random_sample((224, 224, 3)).astype(np.float16), tf.float16), tf.float16),
+                 tf.constant(np.random.randint(1000, size=(1,))[0], tf.int32)), num_parallel_calls=16)
 
     dataset = dataset.prefetch(batch_size)
 
@@ -69,13 +72,3 @@ class ImageNetInput(object):
     images, labels = dataset.make_one_shot_iterator().get_next()
     images = tf.transpose(images, [1, 2, 3, 0])
     return images, labels
-    
-#  def input_fn(self, params):
-#      batch_size = params['batch_size']
-#      print('images input:', batch_size)
-#      images = tf.random_uniform(
-#        [batch_size, 224, 224, 3], minval=-0.5, maxval=0.5, dtype=tf.float16)
-#      labels = tf.random_uniform(
-#        [batch_size], maxval=1000, dtype=tf.int32) 
-#      images = tf.transpose(images, [1, 2, 3, 0])
-#      return images, labels
