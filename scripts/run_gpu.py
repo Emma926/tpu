@@ -35,17 +35,17 @@ cmds = {
 #    --model_dir=gs://$GCS_BUCKET_NAME/tmp\
 #    --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet'),
 
-    'mobilenet_float16_fake':('mobilenet_float16', 'python mobilenet.py' \
-    + ' --alsologtostderr\
-    --num_shards=8\
-    --mode=train\
-    --use_data=fake\
-    --train_batch_size=$BATCH_SIZE\
-    --train_steps=$TRAIN_STEPS\
-    --iterations=$ITERATIONS\
-    --save_checkpoints_secs=10\
-    --model_dir=gs://$GCS_BUCKET_NAME/tmp\
-    --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet'),
+#    'mobilenet_float16_fake':('mobilenet_float16', 'python mobilenet.py' \
+#    + ' --alsologtostderr\
+#    --num_shards=8\
+#    --mode=train\
+#    --use_data=fake\
+#    --train_batch_size=$BATCH_SIZE\
+#    --train_steps=$TRAIN_STEPS\
+#    --iterations=$ITERATIONS\
+#    --save_checkpoints_secs=10\
+#    --model_dir=gs://$GCS_BUCKET_NAME/tmp\
+#    --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet'),
 
     'retinanet_float16_fake':('retinanet_float16_fake', 'python retinanet_main.py'\
     + ' --train_batch_size=$BATCH_SIZE\
@@ -58,16 +58,16 @@ cmds = {
     --num_examples_per_epoch=6400 \
     --num_epochs=1'),
 
-    'squeezenet_float16_fake':('squeezenet_float16_fake','python squeezenet_main.py' \
-    + ' --alsologtostderr\
-    --num_shards=8\
-    --num_evals=0\
-    --batch_size=$BATCH_SIZE\
-    --train_steps=$TRAIN_STEPS\
-    --iterations=$ITERATIONS\
-    --save_checkpoints_secs=10\
-    --model_dir=gs://$GCS_BUCKET_NAME/tmp\
-    --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet'),
+#    'squeezenet_float16_fake':('squeezenet_float16_fake','python squeezenet_main.py' \
+#    + ' --alsologtostderr\
+#    --num_shards=8\
+#    --num_evals=0\
+#    --batch_size=$BATCH_SIZE\
+#    --train_steps=$TRAIN_STEPS\
+#    --iterations=$ITERATIONS\
+#    --save_checkpoints_secs=10\
+#    --model_dir=gs://$GCS_BUCKET_NAME/tmp\
+#    --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet'),
 }
 
 configs = []
@@ -77,7 +77,7 @@ configs = []
 
 configs = [(1024, 100, 300), (1024, 1000, 5000)]
 configs = [(1024, 1000, 5000)]
-#configs = [(1024, 100, 300)]
+configs = [(256, 1000, 500)]
 
 for config in configs:
     for name, (directory, cmd) in cmds.items():
@@ -86,7 +86,7 @@ for config in configs:
         #    print('Creating new directory: ' + os.path.join(out_path, name))
         #    os.makedirs(os.path.join(out_path, name))
         if 'retina' in name:
-          batch_size = 64
+          batch_size = 16
 
         os.system('gsutil rm -r gs://' + GCS_BUCKET_NAME + '/tmp')
         file_name = name + '-batchsize_' + str(batch_size) + '-iteration_' + str(iterations) + '-trainsteps_' + str(train_steps)
@@ -110,13 +110,13 @@ for config in configs:
         cmd = cmd.replace('$ITERATIONS', str(iterations))
         cmd = cmd.replace('$TRAIN_STEPS', str(train_steps))
         cmd = cmd.replace('$MODEL_DIR', file_name)
-        cmd += ' --use_tpu=True --tpu_name=' + os.uname()[1] + ' --zone=us-central1-f'
+        cmd += ' --use_tpu=False'
         cmd = " ".join(cmd.split())
 
         print(name, os.path.join(out_path, file_name + '.err'))
         print(cmd)
 
-        #outfile = open(os.path.join(out_path, file_name + '.out'), 'w')
-        #errfile = open(os.path.join(out_path, file_name + '.err'), 'w')
-        #p = subprocess.Popen(cmd.split(' '), stdout=outfile, stderr=errfile)
-        #p.wait()
+        outfile = open(os.path.join(out_path, file_name + '.out'), 'w')
+        errfile = open(os.path.join(out_path, file_name + '.err'), 'w')
+        p = subprocess.Popen(cmd.split(' '), stdout=outfile, stderr=errfile)
+        p.wait()
