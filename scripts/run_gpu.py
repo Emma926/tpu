@@ -87,6 +87,8 @@ for config in configs:
         #    os.makedirs(os.path.join(out_path, name))
         if 'retina' in name:
           batch_size = 16
+          iterations = 100
+	  train_steps = 500
 
         os.system('gsutil rm -r gs://' + GCS_BUCKET_NAME + '/tmp')
         file_name = name + '-batchsize_' + str(batch_size) + '-iteration_' + str(iterations) + '-trainsteps_' + str(train_steps)
