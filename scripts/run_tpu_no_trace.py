@@ -5,7 +5,7 @@ root = os.path.realpath('..')
 out_path = os.path.join(root, 'outputs')
 model_path= os.path.join(root, 'models/local')
 GCS_BUCKET_NAME='tpubenchmarking'
-tmp_dir = 'gs://' + GCS_BUCKET_NAME + '/tmp_1'
+tmp_dir = 'gs://' + GCS_BUCKET_NAME + '/tmp'
 
 if not os.path.isdir(out_path):
     print('Creating new directory: ' + out_path)
@@ -252,12 +252,12 @@ cmds = {
     --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet'),
 
 #    'transformer':('',
-#    '~/.local/bin/t2t-trainer \
+#    '/home/wangyu/.local/bin/t2t-trainer \
 #    --model=transformer \
 #    --hparams_set=transformer_tpu \
 #    --problem=translate_ende_wmt32k_packed \
 #    --train_steps=500 \
-#    --hparams=\'batch_size=$BATCH_SIZEi,weight_dtype=float32\' \
+#    --hparams=batch_size=$BATCH_SIZE,weight_dtype=float32 \
 #    --eval_steps=1 \
 #    --data_dir=gs://tpubenchmarking/transformer/data \
 #    --output_dir=$MODEL_DIR \
@@ -265,12 +265,12 @@ cmds = {
 #    ),
 
     'transformer_bfloat16':('',
-    '~/.local/bin/t2t-trainer \
+    '/home/wangyu/.local/bin/t2t-trainer \
     --model=transformer \
     --hparams_set=transformer_tpu \
     --problem=translate_ende_wmt32k_packed \
     --train_steps=$TRAIN_STEPS \
-    --hparams=\'batch_size=$BATCH_SIZE\' \
+    --hparams=batch_size=$BATCH_SIZE \
     --eval_steps=1 \
     --data_dir=gs://tpubenchmarking/transformer/data \
     --output_dir=$MODEL_DIR \
