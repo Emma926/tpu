@@ -8,7 +8,7 @@ import os
 import sys
 import time
 
-cmd = 'capture_tpu_profile --tpu_name=' + os.uname()[1] + \
+cmd = 'capture_tpu_profile --tpu=' + os.uname()[1] + \
 ' --duration_ms=60000 --logdir=gs://tpubenchmarking/tpu_trace_1.12'
 
 folder = sys.argv[1]
