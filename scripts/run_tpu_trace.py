@@ -259,7 +259,7 @@ cmds = {
     --hparams=\'batch_size=$BATCH_SIZEi,weight_dtype=float32\' \
     --eval_steps=1 \
     --data_dir=gs://tpubenchmarking/transformer/data \
-    --output_dir=gs://tpubenchmarking/transformer/model \
+    --output_dir=gs://$GCS_BUCKET_NAME/tmp\
     --cloud_tpu_name=$TPU_NAME'
     ),
 
@@ -272,7 +272,7 @@ cmds = {
     --hparams=\'batch_size=$BATCH_SIZE\' \
     --eval_steps=1 \
     --data_dir=gs://tpubenchmarking/transformer/data \
-    --output_dir=gs://tpubenchmarking/transformer/model \
+    --output_dir=gs://$GCS_BUCKET_NAME/tmp\
     --cloud_tpu_name=$TPU_NAME'
     ),
 }

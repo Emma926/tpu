@@ -272,7 +272,7 @@ cmds = {
     --hparams=\'batch_size=$BATCH_SIZE\' \
     --eval_steps=1 \
     --data_dir=gs://tpubenchmarking/transformer/data \
-    --output_dir=gs://tpubenchmarking/transformer/model \
+    --output_dir=gs://$GCS_BUCKET_NAME/tmp \
     --cloud_tpu_name=$TPU_NAME'
     ),
 }
@@ -297,9 +297,11 @@ for name, (directory, cmd) in cmds.iteritems():
 
     os.system('gsutil rm -r gs://' + GCS_BUCKET_NAME + '/tmp')
     file_name = name + '-batchsize_' + str(batch_size) + '-iteration_' + str(iterations) + '-trainsteps_' + str(train_steps)
-    #os.system('grep \"global_step/sec\" ' + os.path.join(out_path, name, file_name + '.err') + ' > tmp')
-    #if not os.stat('tmp').st_size == 0:
-    #    continue
+
+    os.system('grep \"global_step/sec\" ' + os.path.join(out_path, name, file_name + '.err') + ' > tmp')
+    if not os.stat('tmp').st_size == 0:
+        continue
+
     os.chdir(os.path.join(model_path, directory))
     if not 'BATCH_SIZE' in cmd:
       print(name, '\'s cmd does not have BATCH_SIZE.')
