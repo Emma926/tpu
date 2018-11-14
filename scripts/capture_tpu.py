@@ -8,14 +8,15 @@ import os
 import sys
 import time
 
-cmd = 'capture_tpu_profile --tpu_name=' + os.uname()[1] + ' --duration_ms=60000 --logdir=gs://tpubenchmarking/tpu_trace'
+cmd = 'capture_tpu_profile --tpu_name=' + os.uname()[1] + \
+' --duration_ms=60000 --logdir=gs://tpubenchmarking/tpu_trace_1.11'
 
 folder = sys.argv[1]
 
 time.sleep(60)
 count = 0
 
-os.system('gsutil rm -r gs://tpubenchmarking/tpu_trace/' + folder)
+os.system('gsutil rm -r gs://tpubenchmarking/tpu_trace_1.11/' + folder)
 
 #while(1):
 while count <= 10:
