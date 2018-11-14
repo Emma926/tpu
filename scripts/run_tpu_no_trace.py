@@ -298,7 +298,7 @@ for name, (directory, cmd) in cmds.iteritems():
     os.system('gsutil rm -r gs://' + GCS_BUCKET_NAME + '/tmp')
     file_name = name + '-batchsize_' + str(batch_size) + '-iteration_' + str(iterations) + '-trainsteps_' + str(train_steps)
 
-    os.system('grep \"global_step/sec\" ' + os.path.join(out_path, name, file_name + '.err') + ' > tmp')
+    os.system('grep \"global_step/sec\" ' + os.path.join(out_path, file_name + '.err') + ' > tmp')
     if not os.stat('tmp').st_size == 0:
         continue
 
