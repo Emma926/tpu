@@ -2,9 +2,10 @@ import os
 import subprocess
 
 root = os.path.realpath('..')
-out_path = os.path.join(root, 'outputs_trace')
+out_path = os.path.join(root, 'outputs')
 model_path= os.path.join(root, 'models/local')
 GCS_BUCKET_NAME='tpubenchmarking'
+tmp_dir = 'gs://' + GCS_BUCKET_NAME + '/tmp'
 
 if not os.path.isdir(out_path):
     print('Creating new directory: ' + out_path)
@@ -20,7 +21,7 @@ cmds = {
     --iterations_per_loop=$ITERATIONS\
     --train_batch_size=$BATCH_SIZE\
     --tpu_name=$TPU_NAME\
-    --model_dir=gs://$GCS_BUCKET_NAME/tmp'),
+    --model_dir=$MODEL_DIR'),
 
     'resnet_fake':('resnet_fake', 'python resnet_main.py'\
     + ' --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet\
@@ -30,7 +31,7 @@ cmds = {
     --iterations_per_loop=$ITERATIONS\
     --train_batch_size=$BATCH_SIZE\
     --tpu_name=$TPU_NAME\
-    --model_dir=gs://$GCS_BUCKET_NAME/tmp'),
+    --model_dir=$MODEL_DIR'),
 
     'resnet_bfloat16':('resnet_bfloat16', 'python resnet_main.py'\
     + ' --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet\
@@ -40,7 +41,7 @@ cmds = {
     --iterations_per_loop=$ITERATIONS\
     --train_batch_size=$BATCH_SIZE\
     --tpu_name=$TPU_NAME\
-    --model_dir=gs://$GCS_BUCKET_NAME/tmp'),
+    --model_dir=$MODEL_DIR'),
 
     'resnet_bfloat16_fake': ('resnet_bfloat16_fake', 'python resnet_main.py'\
     + ' --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet\
@@ -52,7 +53,7 @@ cmds = {
     --mode=train\
     --use_transpose=1\
     --tpu_name=$TPU_NAME\
-    --model_dir=gs://$GCS_BUCKET_NAME/tmp'),
+    --model_dir=$MODEL_DIR'),
 
     'densenet': ('densenet', 'python densenet_imagenet.py'\
     + ' --alsologtostderr\
@@ -62,7 +63,7 @@ cmds = {
     --train_batch_size=$BATCH_SIZE\
     --train_steps=$TRAIN_STEPS\
     --iterations_per_loop=$ITERATIONS\
-    --model_dir=gs://$GCS_BUCKET_NAME/tmp\
+    --model_dir=$MODEL_DIR\
     --tpu_name=$TPU_NAME\
     --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet'),
 
@@ -74,7 +75,7 @@ cmds = {
     --train_batch_size=$BATCH_SIZE\
     --train_steps=$TRAIN_STEPS\
     --iterations_per_loop=$ITERATIONS\
-    --model_dir=gs://$GCS_BUCKET_NAME/tmp\
+    --model_dir=$MODEL_DIR\
     --tpu_name=$TPU_NAME\
     --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet'),
 
@@ -86,7 +87,7 @@ cmds = {
     --train_batch_size=$BATCH_SIZE\
     --train_steps=$TRAIN_STEPS\
     --iterations_per_loop=$ITERATIONS\
-    --model_dir=gs://$GCS_BUCKET_NAME/tmp\
+    --model_dir=$MODEL_DIR\
     --tpu_name=$TPU_NAME\
     --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet'),
 
@@ -98,7 +99,7 @@ cmds = {
     --train_batch_size=$BATCH_SIZE\
     --train_steps=$TRAIN_STEPS\
     --iterations_per_loop=$ITERATIONS\
-    --model_dir=gs://$GCS_BUCKET_NAME/tmp\
+    --model_dir=$MODEL_DIR\
     --tpu_name=$TPU_NAME\
     --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet'),
 
@@ -111,7 +112,7 @@ cmds = {
     --train_steps=$TRAIN_STEPS\
     --iterations=$ITERATIONS\
     --save_checkpoints_secs=10\
-    --model_dir=gs://$GCS_BUCKET_NAME/tmp\
+    --model_dir=$MODEL_DIR\
     --tpu_name=$TPU_NAME\
     --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet'),
 
@@ -124,7 +125,7 @@ cmds = {
     --train_steps=$TRAIN_STEPS\
     --iterations=$ITERATIONS\
     --save_checkpoints_secs=10\
-    --model_dir=gs://$GCS_BUCKET_NAME/tmp\
+    --model_dir=$MODEL_DIR\
     --tpu_name=$TPU_NAME\
     --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet'),
 
@@ -137,7 +138,7 @@ cmds = {
     --train_steps=$TRAIN_STEPS\
     --iterations=$ITERATIONS\
     --save_checkpoints_secs=10\
-    --model_dir=gs://$GCS_BUCKET_NAME/tmp\
+    --model_dir=$MODEL_DIR\
     --tpu_name=$TPU_NAME\
     --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet'),
 
@@ -150,7 +151,7 @@ cmds = {
     --train_steps=$TRAIN_STEPS\
     --iterations=$ITERATIONS\
     --save_checkpoints_secs=10\
-    --model_dir=gs://$GCS_BUCKET_NAME/tmp\
+    --model_dir=$MODEL_DIR\
     --tpu_name=$TPU_NAME\
     --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet'),
 
@@ -158,7 +159,7 @@ cmds = {
     + ' --train_batch_size=$BATCH_SIZE\
     --training_file_pattern=gs://$GCS_BUCKET_NAME/coco/train-* \
     --resnet_checkpoint=gs://cloud-tpu-artifacts/resnet/resnet-nhwc-2018-02-07/model.ckpt-112603 \
-     --model_dir=gs://$GCS_BUCKET_NAME/tmp\
+     --model_dir=$MODEL_DIR\
     --iterations_per_loop=$ITERATIONS\
     --train_steps=$TRAIN_STEPS\
     --hparams=image_size=640 \
@@ -170,7 +171,7 @@ cmds = {
     + ' --train_batch_size=$BATCH_SIZE\
     --training_file_pattern=gs://$GCS_BUCKET_NAME/coco/train-* \
     --resnet_checkpoint=gs://cloud-tpu-artifacts/resnet/resnet-nhwc-2018-02-07/model.ckpt-112603 \
-     --model_dir=gs://$GCS_BUCKET_NAME/tmp\
+     --model_dir=$MODEL_DIR\
     --iterations_per_loop=$ITERATIONS\
     --train_steps=$TRAIN_STEPS\
     --hparams=image_size=640 \
@@ -182,7 +183,7 @@ cmds = {
     + ' --train_batch_size=$BATCH_SIZE\
     --training_file_pattern=gs://$GCS_BUCKET_NAME/coco/train-* \
     --resnet_checkpoint=gs://cloud-tpu-artifacts/resnet/resnet-nhwc-2018-02-07/model.ckpt-112603 \
-     --model_dir=gs://$GCS_BUCKET_NAME/tmp\
+     --model_dir=$MODEL_DIR\
     --iterations_per_loop=$ITERATIONS\
     --train_steps=$TRAIN_STEPS\
     --hparams=image_size=640 \
@@ -194,7 +195,7 @@ cmds = {
     + ' --train_batch_size=$BATCH_SIZE\
     --training_file_pattern=gs://$GCS_BUCKET_NAME/coco/train-* \
     --resnet_checkpoint=gs://cloud-tpu-artifacts/resnet/resnet-nhwc-2018-02-07/model.ckpt-112603 \
-     --model_dir=gs://$GCS_BUCKET_NAME/tmp\
+     --model_dir=$MODEL_DIR\
     --iterations_per_loop=$ITERATIONS\
     --train_steps=$TRAIN_STEPS\
     --hparams=image_size=640 \
@@ -210,7 +211,7 @@ cmds = {
     --train_steps=$TRAIN_STEPS\
     --iterations=$ITERATIONS\
     --save_checkpoints_secs=10\
-    --model_dir=gs://$GCS_BUCKET_NAME/tmp\
+    --model_dir=$MODEL_DIR\
     --tpu_name=$TPU_NAME\
     --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet'),
 
@@ -222,7 +223,7 @@ cmds = {
     --train_steps=$TRAIN_STEPS\
     --iterations=$ITERATIONS\
     --save_checkpoints_secs=10\
-    --model_dir=gs://$GCS_BUCKET_NAME/tmp\
+    --model_dir=$MODEL_DIR\
     --tpu_name=$TPU_NAME\
     --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet'),
 
@@ -234,7 +235,7 @@ cmds = {
     --train_steps=$TRAIN_STEPS\
     --iterations=$ITERATIONS\
     --save_checkpoints_secs=10\
-    --model_dir=gs://$GCS_BUCKET_NAME/tmp\
+    --model_dir=$MODEL_DIR\
     --tpu_name=$TPU_NAME\
     --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet'),
 
@@ -246,43 +247,43 @@ cmds = {
     --train_steps=$TRAIN_STEPS\
     --iterations=$ITERATIONS\
     --save_checkpoints_secs=10\
-    --model_dir=gs://$GCS_BUCKET_NAME/tmp\
+    --model_dir=$MODEL_DIR\
     --tpu_name=$TPU_NAME\
     --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet'),
 
     'transformer':('',
-    '~/.local/bin/t2t-trainer \
+    '/home/wangyu/.local/bin/t2t-trainer \
     --model=transformer \
     --hparams_set=transformer_tpu \
     --problem=translate_ende_wmt32k_packed \
     --train_steps=500 \
-    --hparams=\'batch_size=$BATCH_SIZEi,weight_dtype=float32\' \
+    --hparams=batch_size=$BATCH_SIZE,weight_dtype=float32 \
     --eval_steps=1 \
     --data_dir=gs://tpubenchmarking/transformer/data \
-    --output_dir=gs://$GCS_BUCKET_NAME/tmp\
+    --output_dir=$MODEL_DIR \
     --cloud_tpu_name=$TPU_NAME'
     ),
 
     'transformer_bfloat16':('',
-    '~/.local/bin/t2t-trainer \
+    '/home/wangyu/.local/bin/t2t-trainer \
     --model=transformer \
     --hparams_set=transformer_tpu \
     --problem=translate_ende_wmt32k_packed \
     --train_steps=$TRAIN_STEPS \
-    --hparams=\'batch_size=$BATCH_SIZE\' \
+    --hparams=batch_size=$BATCH_SIZE \
     --eval_steps=1 \
     --data_dir=gs://tpubenchmarking/transformer/data \
-    --output_dir=gs://$GCS_BUCKET_NAME/tmp\
+    --output_dir=$MODEL_DIR \
     --cloud_tpu_name=$TPU_NAME'
     ),
 }
 
 configs = {
-  'resnet':(1024, 1000, 1000),
-  'densenet':(1024, 1000, 1000),
-  'mobilenet':(1024, 1000, 1000),
-  'squeezenet':(1024, 1000, 1000),
-  'retinanet':(64, 1000, 1000),
+  'resnet':(1024, 1000, 5000),
+  'densenet':(1024, 1000, 5000),
+  'mobilenet':(1024, 1000, 5000),
+  'squeezenet':(1024, 1000, 5000),
+  'retinanet':(64, 1000, 5000),
   'transformer':(4096, 100, 500),
 }
 
@@ -295,18 +296,20 @@ def get_config(wl, configs):
 for name, (directory, cmd) in cmds.iteritems():
     (batch_size, iterations, train_steps) = get_config(name, configs)
 
-    os.system('gsutil rm -r gs://' + GCS_BUCKET_NAME + '/tmp')
+    os.system('gsutil rm -r ' + tmp_dir)
     file_name = name + '-batchsize_' + str(batch_size) + '-iteration_' + str(iterations) + '-trainsteps_' + str(train_steps)
-    #os.system('grep \"global_step/sec\" ' + os.path.join(out_path, name, file_name + '.err') + ' > tmp')
-    #if not os.stat('tmp').st_size == 0:
-    #    continue
+
+    os.system('grep \"global_step/sec\" ' + os.path.join(out_path, file_name + '.err') + ' > tmp')
+    if not os.stat('tmp').st_size == 0:
+        continue
+
     os.chdir(os.path.join(model_path, directory))
     if not 'BATCH_SIZE' in cmd:
       print(name, '\'s cmd does not have BATCH_SIZE.')
       continue
-    #if not 'ITERATIONS' in cmd:
-    #  print(name, '\'s cmd does not have ITERATIONS.')
-    #  continue
+    if not 'MODEL_DIR' in cmd:
+      print(name, '\'s cmd does not have MODEL_DIR.')
+      continue
     if not 'TRAIN_STEPS' in cmd:
       print(name, '\'s cmd does not have TRAIN_STEPS.')
       continue
@@ -315,7 +318,7 @@ for name, (directory, cmd) in cmds.iteritems():
     cmd = cmd.replace('$BATCH_SIZE', str(batch_size))
     cmd = cmd.replace('$ITERATIONS', str(iterations))
     cmd = cmd.replace('$TRAIN_STEPS', str(train_steps))
-    cmd = cmd.replace('$MODEL_DIR', file_name)
+    cmd = cmd.replace('$MODEL_DIR', tmp_dir)
     cmd = cmd.replace('$TPU_NAME', os.uname()[1])
     cmd += ' --use_tpu=True --zone=us-central1-f'
     cmd = " ".join(cmd.split())
@@ -325,4 +328,6 @@ for name, (directory, cmd) in cmds.iteritems():
     outfile = open(os.path.join(out_path, file_name + '.out'), 'w')
     errfile = open(os.path.join(out_path, file_name + '.err'), 'w')
     p = subprocess.Popen(cmd.split(' '), stdout=outfile, stderr=errfile)
+    wp = subprocess.Popen(['python', '/home/wangyu/tpu/scripts/capture_tpu.py', name])
     p.wait()
+    wp.kill()
