@@ -276,6 +276,24 @@ cmds = {
     --output_dir=$MODEL_DIR \
     --cloud_tpu_name=$TPU_NAME'
     ),
+    
+
+    # for tf version < 1.11, t2t==1.6.5
+#    'transformer_bfloat16':('',
+#    '/home/wangyu/.local/bin/t2t-trainer \
+#    --model=transformer \
+#    --hparams_set=transformer_tpu \
+#    --problem=translate_ende_wmt32k_packed \
+#    --train_steps=$TRAIN_STEPS \
+#    --hparams=batch_size=$BATCH_SIZE \
+#    --eval_steps=1 \
+#    --data_dir=gs://tpubenchmarking/transformer/data_1.8 \
+#    --output_dir=$MODEL_DIR \
+#    --master=grpc://10.240.1.146:8470 \
+#    --tpu_num_shards=8 \
+#    --use_tpu=True \
+#    --zone=us-central1-f'
+    ),
 }
 
 configs = {
