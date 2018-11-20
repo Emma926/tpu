@@ -13,13 +13,13 @@ cmd = 'capture_tpu_profile --tpu=' + os.uname()[1] + \
 
 folder = sys.argv[1]
 
-time.sleep(30)
+time.sleep(60)
 count = 0
 
 os.system('gsutil rm -r gs://tpubenchmarking/tpu_trace_1.12/' + folder)
 
 #while(1):
-while count <= 10:
+while count <= 30:
   os.system(cmd + '/' + folder) 
   count += 1
   #time.sleep(60)
