@@ -57,18 +57,7 @@ cmds = {
 #    --num_examples_per_epoch=6400 \
 #    --num_epochs=1'),
 
-#    'squeezenet_float16_fake':('squeezenet_float16_fake','python squeezenet_main.py' \
-#    + ' --alsologtostderr\
-#    --num_shards=8\
-#    --num_evals=0\
-#    --batch_size=$BATCH_SIZE\
-#    --train_steps=$TRAIN_STEPS\
-#    --iterations=$ITERATIONS\
-#    --save_checkpoints_secs=1000\
-#    --model_dir=gs://$GCS_BUCKET_NAME/tmp\
-#    --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet'),
-
-    'squeezenet_fake':('squeezenet_fake','python squeezenet_main.py' \
+    'squeezenet_float16_fake':('squeezenet_float16_fake','python squeezenet_main.py' \
     + ' --alsologtostderr\
     --num_shards=8\
     --num_evals=0\
@@ -78,6 +67,7 @@ cmds = {
     --save_checkpoints_secs=1000\
     --model_dir=gs://$GCS_BUCKET_NAME/tmp\
     --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet'),
+
 }
 
 configs = {
@@ -90,12 +80,14 @@ configs = {
 }
 
 def get_config(wl, configs):
-  for k,v in configs.iteritems():
+  for k in configs.keys():
+    v = configs[k]
     if k in wl:
       return v
   return None
 
-for name, (directory, cmd) in cmds.iteritems():
+for name in cmds.keys():
+    (directory, cmd) = cmds[name]
     (batch_size, iterations, train_steps) = get_config(name, configs)
 
     os.system('gsutil rm -r gs://' + GCS_BUCKET_NAME + '/tmp')
