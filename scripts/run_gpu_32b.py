@@ -12,7 +12,7 @@ if not os.path.isdir(out_path):
 
 cmds = {
 
-#    'resnet_float16_fake': ('resnet_float16_fake', 'python resnet_main.py'\
+#    'resnet_fake': ('resnet_fake', 'python resnet_main.py'\
 #    + ' --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet\
 #    --steps_per_eval=5000\
 #    --train_steps=$TRAIN_STEPS\
@@ -23,7 +23,7 @@ cmds = {
 #    --use_transpose=1\
 #    --model_dir=gs://$GCS_BUCKET_NAME/tmp'),
 #
-#    'densenet_float16_fake': ('densenet_float16_fake', 'python densenet_imagenet.py'\
+#    'densenet_fake': ('densenet_fake', 'python densenet_imagenet.py'\
 #    + ' --alsologtostderr\
 #    --steps_per_checkpoint=100\
 #    --num_shards=8\
@@ -34,7 +34,7 @@ cmds = {
 #    --model_dir=gs://$GCS_BUCKET_NAME/tmp\
 #    --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet'),
 #
-#    'mobilenet_float16_fake':('mobilenet_float16', 'python mobilenet.py' \
+#    'mobilenet_fake':('mobilenet', 'python mobilenet.py' \
 #    + ' --alsologtostderr\
 #    --num_shards=8\
 #    --mode=train\
@@ -46,7 +46,7 @@ cmds = {
 #    --model_dir=gs://$GCS_BUCKET_NAME/tmp\
 #    --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet'),
 #
-#    'retinanet_float16_fake':('retinanet_float16_fake', 'python retinanet_main.py'\
+#    'retinanet_fake':('retinanet_fake', 'python retinanet_main.py'\
 #    + ' --train_batch_size=$BATCH_SIZE\
 #    --training_file_pattern=gs://$GCS_BUCKET_NAME/coco/train-* \
 #    --resnet_checkpoint=gs://cloud-tpu-artifacts/resnet/resnet-nhwc-2018-02-07/model.ckpt-112603 \
@@ -57,7 +57,7 @@ cmds = {
 #    --num_examples_per_epoch=6400 \
 #    --num_epochs=1'),
 
-#    'squeezenet_float16_fake':('squeezenet_float16_fake','python squeezenet_main.py' \
+#    'squeezenet_fake':('squeezenet_fake','python squeezenet_main.py' \
 #    + ' --alsologtostderr\
 #    --num_shards=8\
 #    --num_evals=0\
@@ -81,12 +81,12 @@ cmds = {
 }
 
 configs = {
-  'resnet':(256, 1000, 500),
-  'densenet':(256, 1000, 500),
-  'mobilenet':(256, 1000, 500),
-  'squeezenet':(512, 1000, 500),
-  'retinanet':(16, 1000, 500),
-  'transformer':(1024, 100, 500),
+  'resnet':(128, 1000, 500),
+  'densenet':(128, 1000, 500),
+  'mobilenet':(128, 1000, 500),
+  'squeezenet':(256, 1000, 500),
+  'retinanet':(8, 1000, 500),
+  'transformer':(512, 100, 500),
 }
 
 def get_config(wl, configs):
