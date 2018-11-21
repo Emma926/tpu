@@ -5,7 +5,7 @@ root = os.path.realpath('..')
 out_path = os.path.join(root, 'outputs')
 model_path= os.path.join(root, 'models/local')
 GCS_BUCKET_NAME='tpubenchmarking'
-tmp_dir = 'gs://' + GCS_BUCKET_NAME + '/tmp'
+tmp_dir = 'gs://' + GCS_BUCKET_NAME + '/tmp_12-7'
 
 if not os.path.isdir(out_path):
     print('Creating new directory: ' + out_path)
@@ -57,7 +57,7 @@ cmds = {
 
     'densenet': ('densenet', 'python densenet_imagenet.py'\
     + ' --alsologtostderr\
-    -steps_per_checkpoint=100\
+    --steps_per_checkpoint=1000\
     --num_shards=8\
     --mode=train\
     --train_batch_size=$BATCH_SIZE\
@@ -69,7 +69,7 @@ cmds = {
 
     'densenet_bfloat16': ('densenet_bfloat16', 'python densenet_imagenet.py'\
     + ' --alsologtostderr\
-    -steps_per_checkpoint=100\
+    --steps_per_checkpoint=1000\
     --num_shards=8\
     --mode=train\
     --train_batch_size=$BATCH_SIZE\
@@ -81,7 +81,7 @@ cmds = {
 
     'densenet_fake': ('densenet_fake', 'python densenet_imagenet.py'\
     + ' --alsologtostderr\
-    -steps_per_checkpoint=100\
+    --steps_per_checkpoint=1000\
     --num_shards=8\
     --mode=train\
     --train_batch_size=$BATCH_SIZE\
@@ -93,7 +93,7 @@ cmds = {
 
     'densenet_bfloat16_fake': ('densenet_bfloat16_fake', 'python densenet_imagenet.py'\
     + ' --alsologtostderr\
-    -steps_per_checkpoint=100\
+    --steps_per_checkpoint=1000\
     --num_shards=8\
     --mode=train\
     --train_batch_size=$BATCH_SIZE\
@@ -210,7 +210,7 @@ cmds = {
     --batch_size=$BATCH_SIZE\
     --train_steps=$TRAIN_STEPS\
     --iterations=$ITERATIONS\
-    --save_checkpoints_secs=10\
+    --save_checkpoints_secs=1000\
     --model_dir=$MODEL_DIR\
     --tpu_name=$TPU_NAME\
     --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet'),
@@ -222,7 +222,7 @@ cmds = {
     --batch_size=$BATCH_SIZE\
     --train_steps=$TRAIN_STEPS\
     --iterations=$ITERATIONS\
-    --save_checkpoints_secs=10\
+    --save_checkpoints_secs=1000\
     --model_dir=$MODEL_DIR\
     --tpu_name=$TPU_NAME\
     --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet'),
@@ -234,7 +234,7 @@ cmds = {
     --batch_size=$BATCH_SIZE\
     --train_steps=$TRAIN_STEPS\
     --iterations=$ITERATIONS\
-    --save_checkpoints_secs=10\
+    --save_checkpoints_secs=1000\
     --model_dir=$MODEL_DIR\
     --tpu_name=$TPU_NAME\
     --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet'),
@@ -246,7 +246,7 @@ cmds = {
     --batch_size=$BATCH_SIZE\
     --train_steps=$TRAIN_STEPS\
     --iterations=$ITERATIONS\
-    --save_checkpoints_secs=10\
+    --save_checkpoints_secs=1000\
     --model_dir=$MODEL_DIR\
     --tpu_name=$TPU_NAME\
     --data_dir=gs://cloud-tpu-test-datasets/fake_imagenet'),
@@ -294,14 +294,16 @@ def get_config(wl, configs):
   return None
 
 for name, (directory, cmd) in cmds.iteritems():
+    if not name in ['squeezenet','squeezenet_bfloat16']:
+      continue
     (batch_size, iterations, train_steps) = get_config(name, configs)
 
     os.system('gsutil rm -r ' + tmp_dir)
     file_name = name + '-batchsize_' + str(batch_size) + '-iteration_' + str(iterations) + '-trainsteps_' + str(train_steps)
 
-    os.system('grep \"global_step/sec\" ' + os.path.join(out_path, file_name + '.err') + ' > tmp')
-    if not os.stat('tmp').st_size == 0:
-        continue
+    #os.system('grep \"global_step/sec\" ' + os.path.join(out_path, file_name + '.err') + ' > tmp')
+    #if not os.stat('tmp').st_size == 0:
+    #    continue
 
     os.chdir(os.path.join(model_path, directory))
     if not 'BATCH_SIZE' in cmd:
