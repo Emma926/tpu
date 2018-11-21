@@ -57,7 +57,7 @@ cmds = {
 
 #    'densenet': ('densenet', 'python densenet_imagenet.py'\
 #    + ' --alsologtostderr\
-#    -steps_per_checkpoint=100\
+#    --steps_per_checkpoint=100\
 #    --num_shards=8\
 #    --mode=train\
 #    --train_batch_size=$BATCH_SIZE\
@@ -69,7 +69,7 @@ cmds = {
 #
 #    'densenet_bfloat16': ('densenet_bfloat16', 'python densenet_imagenet.py'\
 #    + ' --alsologtostderr\
-#    -steps_per_checkpoint=100\
+#    --steps_per_checkpoint=100\
 #    --num_shards=8\
 #    --mode=train\
 #    --train_batch_size=$BATCH_SIZE\
@@ -81,7 +81,7 @@ cmds = {
 
 #    'densenet_fake': ('densenet_fake', 'python densenet_imagenet.py'\
 #    + ' --alsologtostderr\
-#    -steps_per_checkpoint=100\
+#    --steps_per_checkpoint=100\
 #    --num_shards=8\
 #    --mode=train\
 #    --train_batch_size=$BATCH_SIZE\
@@ -93,7 +93,7 @@ cmds = {
 
     'densenet_bfloat16_fake': ('densenet_bfloat16_fake', 'python densenet_imagenet.py'\
     + ' --alsologtostderr\
-    -steps_per_checkpoint=100\
+    --steps_per_checkpoint=100\
     --num_shards=8\
     --mode=train\
     --train_batch_size=$BATCH_SIZE\
